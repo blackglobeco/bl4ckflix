@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function NavBar() {
@@ -7,7 +8,8 @@ export default function NavBar() {
   const [searchOpen, setSearchOpen]   = useState(false);
   const [deferredPrompt, setDeferred] = useState(null);
   const [installed, setInstalled]     = useState(false);
-  const menuRef  = useRef(null);
+  const router    = useRouter();
+  const menuRef   = useRef(null);
   const searchRef = useRef(null);
 
   /* ── PWA install prompt ── */
@@ -67,8 +69,12 @@ export default function NavBar() {
           >
             <form
               className="search-overlay-form"
-              action="/search"
-              onSubmit={() => setSearchOpen(false)}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = e.currentTarget.q.value.trim();
+                setSearchOpen(false);
+                router.push(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+              }}
             >
               <div className="search-overlay-pill">
                 {/* Filter label (decorative) */}
@@ -94,9 +100,6 @@ export default function NavBar() {
                   </svg>
                 </button>
               </div>
-              <button type="button" className="search-overlay-close" onClick={() => setSearchOpen(false)} aria-label="Close">
-                ✕
-              </button>
             </form>
           </div>
         )}
