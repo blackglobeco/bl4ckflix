@@ -238,17 +238,6 @@ export default function WatchPlayer({ type, id, season, episode, title, poster }
             </svg>
             {onList ? 'Watchlisted' : 'Add to Watchlist'}
           </button>
-          <a
-            className="wp-bar-btn"
-            href={`https://www.imdb.com/find?q=${encodeURIComponent(title)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-            </svg>
-            Download
-          </a>
         </div>
       </div>
     </div>
