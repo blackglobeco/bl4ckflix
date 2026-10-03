@@ -1,7 +1,6 @@
 import './globals.css';
-import Link from 'next/link';
 import { Bricolage_Grotesque } from 'next/font/google';
-import NavMore from '@/components/NavMore';
+import NavBar from '@/components/NavBar';
 import Chatbot from '@/components/Chatbot';
 
 const f = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font' });
@@ -24,17 +23,7 @@ export default function Root({ children }) {
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body>
-        <nav>
-          <Link href="/" className="logo">BLACKFLIX</Link>
-          <Link href="/search?type=movie">Movies</Link>
-          <Link href="/search?type=tv">Series</Link>
-          <Link href="/search?type=anime">Anime</Link>
-          <Link href="/providers">Providers</Link>
-          <Link href="/watchlist">Watchlist</Link>
-          <NavMore />
-          <span className="sp" />
-          <form action="/search"><input name="q" placeholder="Search titles" aria-label="Search" /></form>
-        </nav>
+        <NavBar />
         <main>{children}</main>
         <Chatbot />
         <footer style={{ textAlign: 'center' }}>
