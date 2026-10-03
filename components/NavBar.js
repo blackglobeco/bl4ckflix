@@ -49,34 +49,57 @@ export default function NavBar() {
       <div className="topnav-icons">
 
         {/* Search */}
-        <div className="topnav-search-wrap" ref={searchRef}>
-          <button
-            className={`topnav-icon-btn${searchOpen ? ' active' : ''}`}
-            aria-label="Search"
-            onClick={() => setSearchOpen(v => !v)}
+        <button
+          className={`topnav-icon-btn${searchOpen ? ' active' : ''}`}
+          aria-label="Search"
+          onClick={() => setSearchOpen(v => !v)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </button>
+
+        {/* Full-screen search overlay */}
+        {searchOpen && (
+          <div
+            className="search-overlay"
+            onClick={(e) => { if (e.target === e.currentTarget) setSearchOpen(false); }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
-          {searchOpen && (
             <form
-              className="topnav-search-dropdown"
+              className="search-overlay-form"
               action="/search"
               onSubmit={() => setSearchOpen(false)}
             >
-              <input
-                name="q"
-                placeholder="Search titles…"
-                aria-label="Search"
-                autoFocus
-              />
-              <button type="submit" aria-label="Go">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <div className="search-overlay-pill">
+                {/* Filter label (decorative) */}
+                <span className="search-overlay-filter">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" y1="6" x2="20" y2="6"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                    <line x1="11" y1="18" x2="13" y2="18"/>
+                  </svg>
+                  Filter
+                </span>
+                <span className="search-overlay-divider" />
+                <input
+                  name="q"
+                  className="search-overlay-input"
+                  placeholder="Search Here..."
+                  aria-label="Search"
+                  autoFocus
+                />
+                <button type="submit" className="search-overlay-submit" aria-label="Search">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </button>
+              </div>
+              <button type="button" className="search-overlay-close" onClick={() => setSearchOpen(false)} aria-label="Close">
+                ✕
               </button>
             </form>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Install App — shows when PWA prompt is available and not yet installed */}
         {!installed && (
