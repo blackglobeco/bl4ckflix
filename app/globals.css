@@ -217,7 +217,7 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
 @keyframes wp-spin{to{transform:rotate(360deg)}}
 
 /* floating select-server button */
-.wp-select-btn{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:7px;background:#7c3aed;color:#fff;border:0;padding:8px 16px;border-radius:99px;font:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap;box-shadow:0 4px 16px #0008}
+.wp-select-btn{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:7px;background:var(--red);color:#fff;border:0;padding:8px 16px;border-radius:99px;font:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap;box-shadow:0 4px 16px #0008}
 .wp-select-btn:hover{background:#6d28d9}
 
 /* server grid overlay */
@@ -228,11 +228,11 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
 .wp-server-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
 .wp-server-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#242220;border:1.5px solid #2c2927;border-radius:10px;padding:10px 6px 8px;cursor:pointer;transition:border-color .15s,background .15s;font:inherit;min-height:72px}
 .wp-server-tile:hover{background:#2e2b29;border-color:#4a4644}
-.wp-tile-active{background:#1e1a3a;border-color:#7c3aed!important}
+.wp-tile-active{background:#1a0f0f;border-color:var(--red)!important}
 .wp-drag-dots{position:absolute;left:4px;top:50%;transform:translateY(-50%);color:#4a4644;opacity:.6}
 .wp-tile-flag{width:22px;height:16px;object-fit:cover;border-radius:2px}
 .wp-tile-name{font-size:.78rem;font-weight:600;color:#efeae3;text-align:center;line-height:1.2}
-.wp-tile-check{position:absolute;top:5px;right:5px;color:#7c3aed}
+.wp-tile-check{position:absolute;top:5px;right:5px;color:var(--red)
 
 /* bottom bar */
 .wp-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:#111;border-top:1px solid #1e1d1c;flex-wrap:wrap}
