@@ -11,7 +11,7 @@ export default async function Providers() {
   const list = [...map.values()].sort((a, b) => a.display_priority - b.display_priority);
   return (
     <div className="page">
-      <h1>Streaming Providers</h1>
+      <h1>Streaming Providers <span className="provider-count">({list.length})</span></h1>
       {list.length ? (
         <div className="prov">
           {list.map((p) => (
