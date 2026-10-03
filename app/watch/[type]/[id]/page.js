@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import WatchPlayer from '@/components/WatchPlayer';
+import EpisodeSelector from '@/components/EpisodeSelector';
 import { tmdb, img, REGION } from '@/lib/tmdb';
 
 export async function generateMetadata({ params }) {
@@ -58,18 +59,13 @@ export default async function WatchPage({ params, searchParams }) {
       </div>
 
       {type === 'tv' && seasons && (
-        <div className="ep-nav page">
-          <h2>Episodes</h2>
-          <div className="ep-selectors">
-            <label>Season
-              <select defaultValue={season} onChange={() => {}}>
-                {Array.from({ length: seasons }, (_, i) => i + 1).map(s => (
-                  <option key={s} value={s}>Season {s}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </div>
+        <EpisodeSelector
+          id={id}
+          type={type}
+          seasons={seasons}
+          currentSeason={season}
+          currentEpisode={episode}
+        />
       )}
 
       {d.similar?.results?.length > 0 && (
