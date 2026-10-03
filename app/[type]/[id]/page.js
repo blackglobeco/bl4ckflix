@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Row from '@/components/Row';
 import WatchButton from '@/components/WatchButton';
 import CastSection from '@/components/CastSection';
-import { tmdb, img, REGION } from '@/lib/tmdb';
+import { tmdb, img } from '@/lib/tmdb';
 
 export async function generateMetadata({ params }) {
   const { type, id } = await params;
@@ -26,14 +26,12 @@ export async function generateMetadata({ params }) {
 export default async function Detail({ params }) {
   const { type, id } = await params;
   if (!['movie', 'tv'].includes(type)) notFound();
-  const d = await tmdb(`/${type}/${id}`, { append_to_response: 'videos,watch/providers,similar,credits' });
+  const d = await tmdb(`/${type}/${id}`, { append_to_response: 'videos,similar,credits' });
   if (!d.id) notFound();
 
   const title = d.title || d.name;
   const year = (d.release_date || d.first_air_date || '').slice(0, 4);
   const yt = d.videos?.results?.find((v) => v.site === 'YouTube' && v.type === 'Trailer');
-  const w = d['watch/providers']?.results?.[REGION];
-  const groups = [['Stream', w?.flatrate], ['Rent', w?.rent], ['Buy', w?.buy]].filter(([, l]) => l?.length);
 
   const cast = d.credits?.cast?.slice(0, 12) || [];
   const director = d.credits?.crew?.find(c => c.job === 'Director');
@@ -74,7 +72,6 @@ export default async function Detail({ params }) {
           <div className="detail-actions">
             <Link href={`/watch/${type}/${id}`} className="btn">▶ Watch Now</Link>
             <WatchButton item={{ id: d.id, type, title, poster: d.poster_path }} />
-            <a className="btn ghost" href={`https://www.imdb.com/find?q=${encodeURIComponent(title)}`} target="_blank" rel="noopener noreferrer">⬇ Download</a>
           </div>
 
           {yt && (
@@ -84,11 +81,7 @@ export default async function Detail({ params }) {
             </div>
           )}
 
-          <h2 style={{ margin: '24px 0 8px' }}>Where to Watch</h2>
-          {groups.length ? groups.map(([g, l]) => (
-            <p key={g}><strong>{g}: </strong>{l.map((p) => p.provider_name).join(', ')}</p>
-          )) : <p className="empty">No streaming info for {REGION} yet.</p>}
-          {w?.link && <a className="btn ghost" style={{ marginTop: 12, display: 'inline-block' }} href={w.link} target="_blank" rel="noopener noreferrer">See all options on JustWatch ↗</a>}
+
         </div>
       </div>
 
