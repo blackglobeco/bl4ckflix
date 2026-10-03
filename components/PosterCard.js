@@ -2,9 +2,12 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { read, write } from '@/components/WatchButton';
+
 export default function PosterCard({ item, type }) {
   const t = item.media_type || type;
   const title = item.title || item.name;
+  const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+  const lang = item.original_language;
   const [on, setOn] = useState(false);
   useEffect(() => setOn(read().some((x) => x.id === item.id && x.type === t)), [item.id, t]);
   const toggle = (e) => {
@@ -17,7 +20,11 @@ export default function PosterCard({ item, type }) {
     <Link href={`/${t}/${item.id}`} className="pc" title={title}>
       <img src={`https://image.tmdb.org/t/p/w342${item.poster_path}`} alt={title} loading="lazy" />
       <button className="bm" onClick={toggle} aria-label={on ? 'Remove from watchlist' : 'Add to watchlist'} aria-pressed={on}>{on ? '✓' : '+'}</button>
-      {item.vote_average > 0 && <span className="rate">★ {item.vote_average.toFixed(1)}</span>}
+      <div className="pc-badges">
+        {item.vote_average > 0 && <span className="badge rate">★ {item.vote_average.toFixed(1)}</span>}
+        {year && <span className="badge year">{year}</span>}
+        {lang && lang !== 'en' && <span className="badge lang">{lang.toUpperCase()}</span>}
+      </div>
     </Link>
   );
 }
