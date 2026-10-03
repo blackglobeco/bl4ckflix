@@ -126,7 +126,6 @@ export default function NavBar() {
               <Link href="/search?type=drama" onClick={() => setMenuOpen(false)}>Drama</Link>
               <Link href="/providers"         onClick={() => setMenuOpen(false)}>Providers</Link>
               <Link href="/watchlist"         onClick={() => setMenuOpen(false)}>Watchlist</Link>
-              <Link href="/settings"          onClick={() => setMenuOpen(false)}>Settings</Link>
             </div>
           )}
         </div>
