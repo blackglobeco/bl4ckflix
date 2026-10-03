@@ -10,7 +10,8 @@ export default async function Home() {
     ...P.map(([, id]) => tmdb('/discover/tv', { with_watch_providers: id, watch_region: REGION, sort_by: 'popularity.desc' })),
   ]);
   const h = tr.results?.find((m) => m.backdrop_path);
-  const provs = (pv.results || []).sort((a, b) => a.display_priority - b.display_priority).slice(0, 24);
+  // Show all providers sorted by priority (no cap)
+  const provs = (pv.results || []).sort((a, b) => a.display_priority - b.display_priority);
   return (
     <>
       {h ? (
@@ -18,12 +19,13 @@ export default async function Home() {
           <div>
             <h1>{h.title}</h1>
             <p>{h.overview}</p>
-            <Link href={`/movie/${h.id}`} className="btn">Trailer and where to watch</Link>
+            <Link href={`/watch/movie/${h.id}`} className="btn">▶ Watch Now</Link>
+            <Link href={`/movie/${h.id}`} className="btn ghost">Details</Link>
           </div>
         </div>
       ) : <div className="page"><p className="empty">Add TMDB_API_KEY to your environment to load titles.</p></div>}
       <section className="row">
-        <h2>Providers<Link href="/providers">See all</Link></h2>
+        <h2>Providers<Link href="/providers">See all ({provs.length})</Link></h2>
         <div className="strip">
           {provs.map((p) => (
             <Link key={p.provider_id} href={`/search?type=tv&provider=${p.provider_id}`} className="card" style={{ flexBasis: 72, aspectRatio: '1' }} title={p.provider_name}>
