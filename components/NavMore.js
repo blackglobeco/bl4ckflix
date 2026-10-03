@@ -19,8 +19,8 @@ export default function NavMore() {
       </button>
       {open && (
         <div className="nav-more-panel">
-          <Link href="/settings" onClick={() => setOpen(false)}>⚙ Settings</Link>
-          <Link href="/search?type=drama" onClick={() => setOpen(false)}>🎭 Drama</Link>
+          <Link href="/search?type=drama" onClick={() => setOpen(false)}>Drama</Link>
+          <Link href="/settings" onClick={() => setOpen(false)}>Settings</Link>
         </div>
       )}
     </div>
