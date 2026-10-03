@@ -37,9 +37,9 @@ export default function Root({ children }) {
         </nav>
         <main>{children}</main>
         <Chatbot />
-        <footer>
-          <p>This site does not store any files on our server, we only linked to the media which is hosted on third party services.</p>
-          <p>BLACKFLIX by Black GLobe © 2026. All Rights Reserved</p>
+        <footer style={{ textAlign: 'center' }}>
+          <p>BLACKFLIX does not store any files on our server, we only linked to the media which is hosted on third party services.</p>
+          <p>BLACKFLIX © 2026. All Rights Reserved</p>
         </footer>
       </body>
     </html>
