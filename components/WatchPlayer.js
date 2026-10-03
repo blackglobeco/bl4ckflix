@@ -1,74 +1,189 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-// Servers with flag emoji for region labelling — matches CineHD's server grid style
-const SERVERS = [
-  // English / Global
-  { id: 'vidsrc',      label: 'VidSrc',     flag: '🇺🇸', movie: (id)       => `https://vidsrc.to/embed/movie/${id}`,                   tv: (id,s,e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
-  { id: 'superembed',  label: 'SuperEmbed', flag: '🇺🇸', movie: (id)       => `https://multiembed.mov/?video_id=${id}&tmdb=1`,          tv: (id,s,e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
-  { id: '2embed',      label: '2Embed',     flag: '🇦🇺', movie: (id)       => `https://www.2embed.cc/embed/${id}`,                     tv: (id,s,e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
-  { id: 'embedsu',     label: 'EmbedSU',    flag: '🇬🇧', movie: (id)       => `https://embed.su/embed/movie/${id}`,                    tv: (id,s,e) => `https://embed.su/embed/tv/${id}/${s}/${e}` },
-  { id: 'vidlink',     label: 'VidLink',    flag: '🇬🇧', movie: (id)       => `https://vidlink.pro/movie/${id}`,                       tv: (id,s,e) => `https://vidlink.pro/tv/${id}/${s}/${e}` },
-  { id: 'autoembed',   label: 'AutoEmbed',  flag: '🇺🇸', movie: (id)       => `https://autoembed.co/movie/tmdb/${id}`,                 tv: (id,s,e) => `https://autoembed.co/tv/tmdb/${id}-${s}-${e}` },
-  { id: 'smashystream',label: 'Premium',    flag: '🇺🇸', movie: (id)       => `https://player.smashy.stream/movie/${id}`,              tv: (id,s,e) => `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
-  { id: '111movies',   label: '111',        flag: '🇬🇧', movie: (id)       => `https://111movies.com/movie/${id}`,                     tv: (id,s,e) => `https://111movies.com/tv/${id}/${s}/${e}` },
-  { id: 'moviesapi',   label: 'MoviesAPI',  flag: '🇺🇸', movie: (id)       => `https://moviesapi.club/movie/${id}`,                    tv: (id,s,e) => `https://moviesapi.club/tv/${id}-${s}-${e}` },
-  { id: 'nontongo',    label: 'Nontongo',   flag: '🇺🇸', movie: (id)       => `https://www.nontongo.win/embed/movie/${id}`,            tv: (id,s,e) => `https://www.nontongo.win/embed/tv/${id}/${s}/${e}` },
-  { id: 'vidsrcpro',   label: 'VidSrc Pro', flag: '🇺🇸', movie: (id)       => `https://vidsrc.pro/embed/movie/${id}`,                  tv: (id,s,e) => `https://vidsrc.pro/embed/tv/${id}/${s}/${e}` },
-  { id: 'vidsrcxyz',   label: 'VidSrc.xyz', flag: '🇬🇧', movie: (id)       => `https://vidsrc.xyz/embed/movie?tmdb=${id}`,             tv: (id,s,e) => `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
-  // Regional / language servers
-  { id: 'hindi',       label: 'Hindi',      flag: '🇮🇳', movie: (id)       => `https://vidsrc.to/embed/movie/${id}`,                   tv: (id,s,e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
-  { id: 'tamil',       label: 'Tamil',      flag: '🇮🇳', movie: (id)       => `https://multiembed.mov/?video_id=${id}&tmdb=1`,          tv: (id,s,e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
-  { id: 'french',      label: 'French',     flag: '🇫🇷', movie: (id)       => `https://embed.su/embed/movie/${id}`,                    tv: (id,s,e) => `https://embed.su/embed/tv/${id}/${s}/${e}` },
-  { id: 'spanish',     label: 'Spanish',    flag: '🇪🇸', movie: (id)       => `https://autoembed.co/movie/tmdb/${id}`,                 tv: (id,s,e) => `https://autoembed.co/tv/tmdb/${id}-${s}-${e}` },
+// Flag image helper — flagsapi.com CDN
+const flag = (code) => `https://flagsapi.com/${code}/flat/24.png`;
+
+// ── MOVIE SERVERS (extracted from CineHD source) ─────────────────────────────
+const MOVIE_SERVERS = [
+  { id: 'max',        name: 'Max',       cc: 'US', url: (id) => `https://ythd.org/embed/${id}` },
+  { id: 'vidpro',     name: 'Vidpro',    cc: 'GB', url: (id) => `https://vixsrc.to/movie/${id}` },
+  { id: 'v2',         name: 'V2',        cc: 'GB', url: (id) => `https://player2.vidplus.pro/embed/movie/${id}?autoplay=true` },
+  { id: 'premium',    name: 'Premium',   cc: 'US', url: (id) => `https://player.vidplus.pro/embed/movie/${id}?autoplay=true&download=true` },
+  { id: '4k',         name: '4K',        cc: 'GB', url: (id) => `https://player.videasy.to/movie/${id}` },
+  { id: 'vidfast',    name: 'Vidfast',   cc: 'GB', url: (id) => `https://vidfast.vc/movie/${id}?autoplay=true` },
+  { id: 'nxsha',      name: 'Nxsha',     cc: 'US', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=en&autoplay=true&sub=en` },
+  { id: 'super',      name: 'Super',     cc: 'GB', url: (id) => `https://vidsuper.net/movie/${id}` },
+  { id: 'vidcore',    name: 'Vidcore',   cc: 'GB', url: (id) => `https://vidcore.net/movie/${id}?autoPlay=true&sub=en` },
+  { id: 'rock',       name: 'Rock',      cc: 'GB', url: (id) => `https://vidrock.net/embed/movie/${id}?autoplay=true` },
+  { id: 'primesrc',   name: 'Primesrc',  cc: 'AU', url: (id) => `https://primesrc.me/embed/movie?imdb=${id}` },
+  { id: '2embed',     name: '2Embed',    cc: 'AU', url: (id) => `https://2embed.stream/embed/movie/${id}` },
+  { id: 'cinemaos',   name: 'Cinemaos',  cc: 'US', url: (id) => `https://cinemaos.tech/player/${id}` },
+  { id: 'prime',      name: 'Prime',     cc: 'US', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=en&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]` },
+  { id: 'netflix',    name: 'Netflix',   cc: 'US', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=en&autoplay=true&one_server=true&server=ZetPly-[Multi-Lang]` },
+  { id: 'hotstar',    name: 'Hotstar',   cc: 'US', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=en&autoplay=true&one_server=true&server=QsPly-[Multi-Lang]` },
+  { id: 'vidnest',    name: 'Vidnest',   cc: 'GB', url: (id) => `https://vidnest.fun/movie/${id}` },
+  { id: 'tongo',      name: 'Tongo',     cc: 'US', url: (id) => `https://www.NontonGo.win/embed/movie/${id}` },
+  { id: 'echo',       name: 'Echo',      cc: 'US', url: (id) => `https://vidlink.pro/movie/${id}?primaryColor=white&secondaryColor=white&iconColor=white&title=false&poster=true&autoplay=true` },
+  { id: 'nhd',        name: 'NHD',       cc: 'IN', url: (id) => `https://nhdapi.com/embed/movie/${id}?autoplay=true&autonext=true&audio=true&title=true&download=true` },
+  { id: 'mplay',      name: 'Mplay',     cc: 'IN', url: (id) => `https://rozgarlelo.modiplay.xyz/embed/tmdb/movie?id=${id}` },
+  { id: 'xpass',      name: 'Xpass',     cc: 'US', url: (id) => `https://play.xpass.top/e/movie/${id}` },
+  { id: 'bravo',      name: 'Bravo',     cc: 'GB', url: (id) => `https://moviesapi.to/movie/${id}` },
+  { id: 'vidking',    name: 'Vidking',   cc: 'US', url: (id) => `https://www.vidking.net/embed/movie/${id}?autoplay=true` },
+  { id: '111',        name: '111',       cc: 'GB', url: (id) => `https://111movies.net/movie/${id}` },
+  { id: 'jade',       name: 'Jade',      cc: 'PT', url: (id) => `https://superflixapi.lifestyle/filme/${id}` },
+  { id: 'french',     name: 'French',    cc: 'FR', url: (id) => `https://frembed.hair/api/film.php?id=${id}` },
+  { id: 'spanish',    name: 'Spanish',   cc: 'ES', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=es&autoplay=true&sub=es` },
+  { id: 'hindi',      name: 'Hindi',     cc: 'IN', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=hindi&autoplay=true` },
+  { id: 'tamil',      name: 'Tamil',     cc: 'IN', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=tamil&autoplay=true` },
+  { id: 'telugu',     name: 'Telugu',    cc: 'IN', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=telugu&autoplay=true` },
+  { id: 'arab',       name: 'Arab',      cc: 'SA', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=ar&autoplay=true&sub=ar` },
+  { id: 'french2',    name: 'French 2',  cc: 'FR', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=fr&autoplay=true&sub=fr` },
+  { id: 'brazil',     name: 'Brazil',    cc: 'BR', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=pt&autoplay=true&sub=pt` },
+  { id: 'rus',        name: 'Rus',       cc: 'RU', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=ru&autoplay=true&sub=ru` },
+  { id: 'german',     name: 'German',    cc: 'DE', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=de&autoplay=true&sub=de` },
+  { id: 'italy',      name: 'Italy',     cc: 'IT', url: (id) => `https://vixsrc.to/movie/${id}?lang=it` },
+  { id: 'italy2',     name: 'Italy 2',   cc: 'IT', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=it&autoplay=true&sub=it` },
+  { id: 'japan',      name: 'Japan',     cc: 'JP', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=ja&autoplay=true&sub=ja` },
+  { id: 'polish',     name: 'Polish',    cc: 'PL', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=pl&autoplay=true&sub=pl` },
+  { id: 'thai',       name: 'Thai',      cc: 'TH', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=th&autoplay=true&sub=th` },
+  { id: 'turkish',    name: 'Turkish',   cc: 'TR', url: (id) => `https://nxsha.space/embed/movie/${id}?lang=tr&autoplay=true&sub=tr` },
+  { id: 'rive',       name: 'Rive',      cc: 'GB', url: (id) => `https://www.rivestream.app/embed?type=movie&id=${id}` },
+  { id: 'flicky',     name: 'Flicky',    cc: 'IN', url: (id) => `https://flicky.host/embed/movie/?id=${id}` },
+  { id: 'peachify',   name: 'Peachify',  cc: 'US', url: (id) => `https://peachify.top/embed/movie/${id}?autoplay=true&sub=English` },
 ];
 
+// ── TV SERVERS ────────────────────────────────────────────────────────────────
+const TV_SERVERS = [
+  { id: 'max',        name: 'Max',       cc: 'US', url: (id,s,e) => `https://ythd.org/embed/${id}/${s}-${e}` },
+  { id: 'vidpro',     name: 'Vidpro',    cc: 'GB', url: (id,s,e) => `https://vixsrc.to/tv/${id}/${s}/${e}` },
+  { id: 'v2',         name: 'V2',        cc: 'GB', url: (id,s,e) => `https://player2.vidplus.pro/embed/tv/${id}/${s}/${e}?autoplay=true` },
+  { id: 'premium',    name: 'Premium',   cc: 'US', url: (id,s,e) => `https://player.vidplus.pro/embed/tv/${id}/${s}/${e}?autoplay=true&autonext=true&nextbutton=true&poster=true&download=true` },
+  { id: '4k',         name: '4K',        cc: 'GB', url: (id,s,e) => `https://player.videasy.to/tv/${id}/${s}/${e}` },
+  { id: 'vidfast',    name: 'Vidfast',   cc: 'GB', url: (id,s,e) => `https://vidfast.vc/tv/${id}/${s}/${e}?autoplay=true` },
+  { id: 'nxsha',      name: 'Nxsha',     cc: 'US', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=en&autoplay=true&sub=en` },
+  { id: 'super',      name: 'Super',     cc: 'GB', url: (id,s,e) => `https://vidsuper.net/tv/${id}/${s}/${e}` },
+  { id: 'vidcore',    name: 'Vidcore',   cc: 'GB', url: (id,s,e) => `https://vidcore.net/tv/${id}/${s}/${e}?autoPlay=true&sub=en` },
+  { id: 'rock',       name: 'Rock',      cc: 'GB', url: (id,s,e) => `https://vidrock.net/embed/tv/${id}/${s}/${e}?autoplay=true&nextbutton=false&episodeselector=false` },
+  { id: 'primesrc',   name: 'Primesrc',  cc: 'AU', url: (id,s,e) => `https://primesrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
+  { id: '2embed',     name: '2Embed',    cc: 'AU', url: (id,s,e) => `https://www.2embed.stream/embed/tv/${id}/${s}/${e}` },
+  { id: 'cinemaos',   name: 'Cinemaos',  cc: 'US', url: (id,s,e) => `https://cinemaos.tech/player/${id}/${s}/${e}` },
+  { id: 'prime',      name: 'Prime',     cc: 'US', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=en&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]` },
+  { id: 'netflix',    name: 'Netflix',   cc: 'US', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=en&autoplay=true&one_server=true&server=ZetPly-[Multi-Lang]` },
+  { id: 'hotstar',    name: 'Hotstar',   cc: 'US', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=en&autoplay=true&one_server=true&server=QsPly-[Multi-Lang]` },
+  { id: 'vidnest',    name: 'Vidnest',   cc: 'GB', url: (id,s,e) => `https://vidnest.fun/tv/${id}/${s}/${e}` },
+  { id: 'tongo',      name: 'Tongo',     cc: 'US', url: (id,s,e) => `https://www.NontonGo.win/embed/tv/${id}/${s}/${e}` },
+  { id: 'echo',       name: 'Echo',      cc: 'US', url: (id,s,e) => `https://vidlink.pro/tv/${id}/${s}/${e}?primaryColor=white&secondaryColor=white&iconColor=white&title=false&poster=true&autoplay=true` },
+  { id: 'nhd',        name: 'NHD',       cc: 'IN', url: (id,s,e) => `https://nhdapi.com/embed/tv/${id}/${s}/${e}?autoplay=true&autonext=true&audio=true&title=true&download=true` },
+  { id: 'mplay',      name: 'Mplay',     cc: 'IN', url: (id,s,e) => `https://rozgarlelo.modiplay.xyz/embed/tmdb/tv?id=${id}&s=${s}&e=${e}` },
+  { id: 'xpass',      name: 'Xpass',     cc: 'US', url: (id,s,e) => `https://play.xpass.top/e/tv/${id}/${s}/${e}` },
+  { id: 'bravo',      name: 'Bravo',     cc: 'GB', url: (id,s,e) => `https://moviesapi.to/tv/${id}/${s}/${e}` },
+  { id: 'vidking',    name: 'Vidking',   cc: 'US', url: (id,s,e) => `https://www.vidking.net/embed/tv/${id}/${s}/${e}?autoplay=true&episodeSelector=true` },
+  { id: '111',        name: '111',       cc: 'GB', url: (id,s,e) => `https://111movies.net/tv/${id}/${s}/${e}` },
+  { id: 'jade',       name: 'Jade',      cc: 'PT', url: (id,s,e) => `https://superflixapi.lifestyle/serie/${id}/${s}/${e}` },
+  { id: 'french',     name: 'French',    cc: 'FR', url: (id,s,e) => `https://frembed.hair/api/serie.php?id=${id}&sa=${s}&epi=${e}` },
+  { id: 'spanish',    name: 'Spanish',   cc: 'ES', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=es&autoplay=true&sub=es` },
+  { id: 'hindi',      name: 'Hindi',     cc: 'IN', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=hindi&autoplay=true` },
+  { id: 'tamil',      name: 'Tamil',     cc: 'IN', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=tamil&autoplay=true` },
+  { id: 'telugu',     name: 'Telugu',    cc: 'IN', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=telugu&autoplay=true` },
+  { id: 'arab',       name: 'Arab',      cc: 'SA', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=ar&autoplay=true&sub=ar` },
+  { id: 'french2',    name: 'French 2',  cc: 'FR', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=fr&autoplay=true&sub=fr` },
+  { id: 'brazil',     name: 'Brazil',    cc: 'BR', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=pt&autoplay=true&sub=pt` },
+  { id: 'rus',        name: 'Rus',       cc: 'RU', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=ru&autoplay=true&sub=ru` },
+  { id: 'german',     name: 'German',    cc: 'DE', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=de&autoplay=true&sub=de` },
+  { id: 'italy',      name: 'Italy',     cc: 'IT', url: (id,s,e) => `https://vixsrc.to/tv/${id}/${s}/${e}?lang=it` },
+  { id: 'italy2',     name: 'Italy 2',   cc: 'IT', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=it&autoplay=true&sub=it` },
+  { id: 'japan',      name: 'Japan',     cc: 'JP', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=ja&autoplay=true&sub=ja` },
+  { id: 'polish',     name: 'Polish',    cc: 'PL', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=pl&autoplay=true&sub=pl` },
+  { id: 'thai',       name: 'Thai',      cc: 'TH', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=th&autoplay=true&sub=th` },
+  { id: 'turkish',    name: 'Turkish',   cc: 'TR', url: (id,s,e) => `https://nxsha.space/embed/tv/${id}/${s}/${e}?lang=tr&autoplay=true&sub=tr` },
+  { id: 'rive',       name: 'Rive',      cc: 'GB', url: (id,s,e) => `https://www.rivestream.app/embed?type=tv&id=${id}&season=${s}&episode=${e}` },
+  { id: 'flicky',     name: 'Flicky',    cc: 'IN', url: (id,s,e) => `https://flicky.host/embed/tv/?id=${id}/${s}/${e}` },
+  { id: 'peachify',   name: 'Peachify',  cc: 'US', url: (id,s,e) => `https://peachify.top/embed/tv/${id}/${s}/${e}?autoplay=true&sub=English` },
+];
+
+// Watchlist localStorage helpers (shared key with WatchButton.js)
+const K = 'blackflix:list';
+const readList = () => { try { return JSON.parse(localStorage.getItem(K) || '[]'); } catch { return []; } };
+const writeList = (l) => localStorage.setItem(K, JSON.stringify(l));
+
 export default function WatchPlayer({ type, id, season, episode, title }) {
-  const [active, setActive]     = useState(SERVERS[0].id);
+  const servers = type === 'movie' ? MOVIE_SERVERS : TV_SERVERS;
+
+  const [active, setActive]     = useState(servers[0].id);
   const [showGrid, setShowGrid] = useState(false);
   const [alert, setAlert]       = useState(true);
   const [loaded, setLoaded]     = useState(false);
+  const [onList, setOnList]     = useState(false);
 
-  const server = SERVERS.find(s => s.id === active) || SERVERS[0];
-  const url    = type === 'movie' ? server.movie(id) : server.tv(id, season, episode);
-
-  // reset loaded state when server changes
+  useEffect(() => setOnList(readList().some(x => x.id === id && x.type === type)), [id, type]);
   useEffect(() => { setLoaded(false); }, [active]);
+
+  const server = servers.find(s => s.id === active) || servers[0];
+  const src    = type === 'movie' ? server.url(id) : server.url(id, season, episode);
 
   const pick = (sid) => { setActive(sid); setShowGrid(false); };
 
+  const toggleList = () => {
+    const l = readList().filter(x => !(x.id === id && x.type === type));
+    if (!onList) l.unshift({ id, type, title, poster: null });
+    writeList(l);
+    setOnList(!onList);
+  };
+
   return (
     <div className="wp-root">
-      {/* ── title bar ── */}
+      {/* title bar */}
       <div className="wp-titlebar">
-        <span className="wp-now">Now Watching: <strong>{title}</strong></span>
+        <span>Now Watching: <strong>{title}</strong></span>
       </div>
 
-      {/* ── alert banner ── */}
+      {/* alert */}
       {alert && (
         <div className="wp-alert">
-          <span>🔔 Please switch to other servers if default server doesn't work.</span>
+          <span>🔔 Please switch to other servers if default server doesn&apos;t work.</span>
           <button onClick={() => setAlert(false)} aria-label="Dismiss">✕</button>
         </div>
       )}
 
-      {/* ── player area ── */}
+      {/* player area */}
       <div className="wp-stage">
-        {/* server-select overlay grid */}
+
+        {/* server grid overlay — CineHD style */}
         {showGrid && (
           <div className="wp-overlay" onClick={e => e.target === e.currentTarget && setShowGrid(false)}>
             <div className="wp-grid-panel">
-              <button className="wp-grid-close" onClick={() => setShowGrid(false)}>✕ Close</button>
-              <div className="wp-grid">
-                {SERVERS.map(s => (
+              <button className="wp-grid-close" onClick={() => setShowGrid(false)}>
+                ✕ Close
+              </button>
+              <div className="wp-server-grid">
+                {servers.map(s => (
                   <button
                     key={s.id}
-                    className={`wp-server-tile${active === s.id ? ' wp-active' : ''}`}
+                    className={`wp-server-tile${active === s.id ? ' wp-tile-active' : ''}`}
                     onClick={() => pick(s.id)}
                   >
-                    <span className="wp-flag">{s.flag}</span>
-                    <span className="wp-slabel">{s.label}</span>
-                    {active === s.id && <span className="wp-check">✓</span>}
+                    {/* drag dots (visual only, matches CineHD style) */}
+                    <span className="wp-drag-dots">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                        <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2m-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2"/>
+                      </svg>
+                    </span>
+                    {/* flag */}
+                    <img
+                      src={flag(s.cc)}
+                      alt={s.cc}
+                      className="wp-tile-flag"
+                      onError={e => { e.currentTarget.style.display = 'none'; }}
+                    />
+                    <span className="wp-tile-name">{s.name}</span>
+                    {active === s.id && (
+                      <span className="wp-tile-check">
+                        <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                        </svg>
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -76,17 +191,21 @@ export default function WatchPlayer({ type, id, season, episode, title }) {
           </div>
         )}
 
-        {/* select-server toggle button over player */}
+        {/* select server button floating over player */}
         <button className="wp-select-btn" onClick={() => setShowGrid(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="2" rx="1"/><rect x="3" y="11" width="18" height="2" rx="1"/><rect x="3" y="17" width="18" height="2" rx="1"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="3" y="5" width="18" height="2" rx="1"/>
+            <rect x="3" y="11" width="18" height="2" rx="1"/>
+            <rect x="3" y="17" width="18" height="2" rx="1"/>
+          </svg>
           Select a server
         </button>
 
         {/* iframe */}
         <div className="wp-frame">
           <iframe
-            key={url}
-            src={url}
+            key={src}
+            src={src}
             title={`Watch ${title}`}
             allowFullScreen
             allow="autoplay; fullscreen; picture-in-picture"
@@ -101,37 +220,32 @@ export default function WatchPlayer({ type, id, season, episode, title }) {
         </div>
       </div>
 
-      {/* ── bottom action bar ── */}
+      {/* bottom bar */}
       <div className="wp-bar">
-        <span className="wp-active-server">{server.flag} {server.label}</span>
+        <span className="wp-active-label">
+          <img src={flag(server.cc)} alt={server.cc} className="wp-bar-flag" onError={e => { e.currentTarget.style.display='none'; }} />
+          {server.name}
+        </span>
         <div className="wp-bar-actions">
-          <WatchlistBtn id={id} type={type} title={title} />
-          <a className="wp-bar-btn" href={`https://www.imdb.com/find?q=${encodeURIComponent(title)}`} target="_blank" rel="noopener noreferrer">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          <button className={`wp-bar-btn${onList ? ' wp-bar-on' : ''}`} onClick={toggleList}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={onList ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+            </svg>
+            {onList ? 'Watchlisted' : 'Add to Watchlist'}
+          </button>
+          <a
+            className="wp-bar-btn"
+            href={`https://www.imdb.com/find?q=${encodeURIComponent(title)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
             Download
           </a>
         </div>
       </div>
     </div>
-  );
-}
-
-// Inline watchlist button (reads localStorage same key as WatchButton.js)
-function WatchlistBtn({ id, type, title }) {
-  const K = 'blackflix:list';
-  const read = () => { try { return JSON.parse(localStorage.getItem(K) || '[]'); } catch { return []; } };
-  const [on, setOn] = useState(false);
-  useEffect(() => setOn(read().some(x => x.id === id && x.type === type)), [id, type]);
-  const toggle = () => {
-    const l = read().filter(x => !(x.id === id && x.type === type));
-    if (!on) l.unshift({ id, type, title, poster: null });
-    localStorage.setItem(K, JSON.stringify(l));
-    setOn(!on);
-  };
-  return (
-    <button className={`wp-bar-btn${on ? ' wp-bar-on' : ''}`} onClick={toggle}>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-      {on ? 'Watchlisted' : 'Add to Watchlist'}
-    </button>
   );
 }
