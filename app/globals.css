@@ -73,8 +73,10 @@ a{color:inherit;text-decoration:none}
 }
 .topnav-menu-panel a:hover{background:#2c2927;color:#fff}
 
-/* push main content below fixed nav */
-main{padding-top:0} /* hero handles its own top spacing */
+/* push all pages below the fixed nav */
+main{padding-top:70px}
+/* hero on home page bleeds back under the nav */
+.hero-carousel{margin-top:-70px}
 
 /* ── MAIN ── */
 main{padding-bottom:60px}
