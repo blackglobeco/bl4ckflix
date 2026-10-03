@@ -1,52 +1,122 @@
 import Link from 'next/link';
 import Row from '@/components/Row';
 import HeroBanner from '@/components/HeroBanner';
+import ContinueWatching from '@/components/ContinueWatching';
 import { tmdb, img, REGION } from '@/lib/tmdb';
 
-const P = [['Netflix', 8], ['Amazon Prime Video', 9], ['Apple TV+', 350], ['Disney+', 337], ['Peacock', 386], ['Max', 1899]];
+// Provider rows: [label, provider_id]
+const PROVIDERS = [
+  ['Netflix Originals',    8],
+  ['Amazon Prime Shows',   9],
+  ['Apple TV+ Shows',    350],
+  ['Disney+ Shows',      337],
+  ['Peacock TV Shows',   386],
+  ['Max Shows',         1899],
+];
 
 export default async function Home() {
-  const [tr, np, tv, pv, india, ...prov] = await Promise.all([
+  const [trending, nowPlaying, trendingTV, allProviders, india, ...provRows] = await Promise.all([
     tmdb('/trending/all/week'),
     tmdb('/movie/now_playing', { region: REGION }),
     tmdb('/trending/tv/week'),
     tmdb('/watch/providers/tv', { watch_region: REGION }),
     tmdb('/discover/movie', { with_origin_country: 'IN', sort_by: 'popularity.desc' }),
-    ...P.map(([, id]) => tmdb('/discover/tv', { with_watch_providers: id, watch_region: REGION, sort_by: 'popularity.desc' })),
+    ...PROVIDERS.map(([, id]) =>
+      tmdb('/discover/tv', { with_watch_providers: id, watch_region: REGION, sort_by: 'popularity.desc' })
+    ),
   ]);
 
-  // Banner items: top 15 trending with backdrop
-  const bannerItems = (tr.results || [])
-    .filter((m) => m.backdrop_path && (m.overview?.length > 40))
+  // Banner: top 15 from trending/all with backdrop + meaningful overview
+  const bannerItems = (trending.results || [])
+    .filter(m => m.backdrop_path && (m.overview?.length > 40))
     .slice(0, 15);
 
-  const provs = (pv.results || []).sort((a, b) => a.display_priority - b.display_priority);
+  // Trending movies/tv from the all-trending endpoint
+  const trendingMovies = (trending.results || []).filter(
+    i => (i.media_type === 'movie') && i.poster_path
+  );
+
+  // Providers strip (all providers sorted by priority)
+  const providerStrip = (allProviders.results || [])
+    .sort((a, b) => a.display_priority - b.display_priority);
 
   return (
     <>
+      {/* ── BANNER CAROUSEL ── */}
       {bannerItems.length ? (
         <HeroBanner items={bannerItems} />
       ) : (
-        <div className="page"><p className="empty">Add TMDB_API_KEY to your environment to load titles.</p></div>
+        <div className="page">
+          <p className="empty">Add TMDB_API_KEY to your environment to load titles.</p>
+        </div>
       )}
 
-      {/* Providers strip */}
+      {/* ── PROVIDERS ── */}
       <section className="row">
-        <h2>Providers<Link href="/providers">See all ({provs.length})</Link></h2>
+        <h2>
+          Providers
+          <Link href="/providers">View All ({providerStrip.length})</Link>
+        </h2>
         <div className="strip">
-          {provs.map((p) => (
-            <Link key={p.provider_id} href={`/search?type=tv&provider=${p.provider_id}`} className="card" style={{ flexBasis: 72, aspectRatio: '1' }} title={p.provider_name}>
+          {providerStrip.map(p => (
+            <Link
+              key={p.provider_id}
+              href={`/search?type=tv&provider=${p.provider_id}`}
+              className="card"
+              style={{ flexBasis: 72, aspectRatio: '1' }}
+              title={p.provider_name}
+            >
               <img src={img(p.logo_path, 'w92')} alt={p.provider_name} loading="lazy" />
             </Link>
           ))}
         </div>
       </section>
 
-      <Row title="Now Playing" items={np.results} type="movie" href="/search?type=movie" />
-      <Row title="Trending Movies" items={(tr.results || []).filter(i => (i.media_type || 'movie') === 'movie')} type="movie" href="/search?type=movie" />
-      <Row title="Trending Series" items={tv.results} type="tv" href="/search?type=tv" />
-      {P.map(([n, id], i) => <Row key={id} title={`${n} Shows`} items={prov[i].results} type="tv" href={`/search?type=tv&provider=${id}`} />)}
-      <Row title="Indian Movies" items={india.results} type="movie" />
+      {/* ── CONTINUE WATCHING (client — reads localStorage) ── */}
+      <ContinueWatching />
+
+      {/* ── NOW PLAYING ── */}
+      <Row
+        title="Now Playing"
+        viewAllHref="/search?type=movie"
+        items={nowPlaying.results}
+        type="movie"
+      />
+
+      {/* ── TRENDING MOVIES ── */}
+      <Row
+        title="Trending Movies"
+        viewAllHref="/search?type=movie"
+        items={trendingMovies}
+        type="movie"
+      />
+
+      {/* ── TRENDING TV SHOWS ── */}
+      <Row
+        title="Trending TV Shows"
+        viewAllHref="/search?type=tv"
+        items={trendingTV.results}
+        type="tv"
+      />
+
+      {/* ── PROVIDER ROWS ── */}
+      {PROVIDERS.map(([label, id], i) => (
+        <Row
+          key={id}
+          title={label}
+          viewAllHref={`/search?type=tv&provider=${id}`}
+          items={provRows[i]?.results}
+          type="tv"
+        />
+      ))}
+
+      {/* ── INDIAN MOVIES ── */}
+      <Row
+        title="Indian Movies"
+        viewAllHref="/search?type=movie&country=IN"
+        items={india.results}
+        type="movie"
+      />
     </>
   );
 }

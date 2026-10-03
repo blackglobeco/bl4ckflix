@@ -442,3 +442,17 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
   .hc-btn { padding: 9px 18px; font-size: .88rem; }
   .hc-arrow { display: none; }
 }
+
+/* ── CONTINUE WATCHING ── */
+.cw-card { position: relative; }
+.cw-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.cw-card:hover .cw-overlay { opacity: 1; }
