@@ -78,65 +78,6 @@ main{padding-top:70px}
 /* hero on home page bleeds back under the nav */
 .hero-carousel{margin-top:-70px}
 
-/* ensure logo always visible (white, not transparent) */
-.topnav-logo{color:#fff!important}
-
-/* desktop-only hamburger — hide on mobile */
-.topnav-desktop-only{display:flex}
-
-/* ── MOBILE BOTTOM NAV ── */
-.mobnav{display:none}
-.mob-more-overlay{display:none}
-
-@media(max-width:700px){
-  /* hide desktop hamburger on mobile */
-  .topnav-desktop-only{display:none!important}
-
-  /* topnav: solid bg on mobile so logo is always readable */
-  .topnav{background:#0c0b0b!important}
-
-  /* bottom nav bar */
-  .mobnav{
-    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;
-    background:#111010;border-top:1px solid #1e1c1b;
-    padding:0 0 env(safe-area-inset-bottom,0px);
-  }
-  .mobnav-item{
-    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-    padding:8px 4px 6px;color:#9a938a;font-size:.65rem;font-weight:500;
-    text-decoration:none;border:0;background:none;cursor:pointer;
-    transition:color .15s;font-family:inherit;
-  }
-  .mobnav-item:hover,.mobnav-active{color:#fff}
-  .mobnav-active svg{stroke:var(--red)}
-
-  /* push main above bottom bar */
-  main{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
-  footer{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
-
-  /* slide-up more panel */
-  .mob-more-overlay{
-    display:block;position:fixed;inset:0;z-index:300;
-    background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
-  }
-  .mob-more-panel{
-    position:absolute;bottom:0;left:0;right:0;
-    background:#1a1918;border-radius:16px 16px 0 0;
-    padding:8px 0 calc(16px + env(safe-area-inset-bottom,0px));
-  }
-  .mob-more-handle{
-    width:36px;height:4px;border-radius:2px;background:#3a3734;
-    margin:0 auto 16px;
-  }
-  .mob-more-item{
-    display:flex;align-items:center;gap:16px;
-    padding:14px 24px;color:var(--text);font-size:1rem;font-weight:500;
-    text-decoration:none;transition:background .12s;
-  }
-  .mob-more-item:hover{background:#2c2927}
-  .mob-more-item svg{flex-shrink:0;opacity:.7}
-}
-
 /* ── MAIN ── */
 main{padding-bottom:60px}
 
