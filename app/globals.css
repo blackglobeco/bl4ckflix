@@ -34,29 +34,79 @@ a{color:inherit;text-decoration:none}
 }
 .topnav-icon-btn:hover,.topnav-icon-btn.active{background:rgba(255,255,255,.12);color:#fff}
 
-/* search dropdown */
-.topnav-search-wrap{position:relative}
-.topnav-search-dropdown{
-  position:absolute;top:calc(100% + 10px);right:0;
-  display:flex;align-items:center;gap:0;
-  background:#1e1d1c;border:1px solid #2c2927;
-  border-radius:10px;overflow:hidden;
-  width:280px;
-  box-shadow:0 12px 30px #000c;
+/* ── SEARCH OVERLAY (CineHD-style full-screen) ── */
+.search-overlay{
+  position:fixed;inset:0;z-index:500;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding-top:90px;
+  background:rgba(8,8,10,.72);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  animation:so-in .18s ease;
 }
-.topnav-search-dropdown input{
+@keyframes so-in{from{opacity:0;backdrop-filter:blur(0)}to{opacity:1;backdrop-filter:blur(14px)}}
+
+.search-overlay-form{
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  width:min(680px,90vw);
+}
+
+.search-overlay-pill{
+  display:flex;align-items:center;
+  width:100%;
+  background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.18);
+  border-radius:99px;
+  overflow:hidden;
+  backdrop-filter:blur(6px);
+  transition:border-color .15s;
+}
+.search-overlay-pill:focus-within{border-color:rgba(255,255,255,.45)}
+
+.search-overlay-filter{
+  display:flex;align-items:center;gap:7px;
+  padding:0 18px;
+  color:rgba(255,255,255,.65);
+  font-size:.88rem;font-weight:600;
+  white-space:nowrap;cursor:default;
+  flex-shrink:0;
+}
+.search-overlay-divider{
+  width:1px;height:22px;
+  background:rgba(255,255,255,.2);
+  flex-shrink:0;
+}
+.search-overlay-input{
   flex:1;background:transparent;border:0;
-  color:var(--text);padding:10px 14px;
-  font:inherit;font-size:.92rem;outline:none;
+  color:#fff;padding:16px 16px;
+  font:inherit;font-size:1rem;outline:none;
+  min-width:0;
 }
-.topnav-search-dropdown input::placeholder{color:var(--mute)}
-.topnav-search-dropdown button{
-  background:none;border:0;color:var(--mute);
-  padding:0 12px;cursor:pointer;height:100%;
+.search-overlay-input::placeholder{color:rgba(255,255,255,.4)}
+.search-overlay-submit{
+  background:none;border:0;
+  color:rgba(255,255,255,.55);
+  padding:0 18px;height:100%;cursor:pointer;
   display:grid;place-items:center;
-  transition:color .15s;
+  transition:color .15s;flex-shrink:0;
 }
-.topnav-search-dropdown button:hover{color:#fff}
+.search-overlay-submit:hover{color:#fff}
+
+.search-overlay-close{
+  background:none;border:0;
+  color:rgba(255,255,255,.45);
+  font-size:1.1rem;cursor:pointer;
+  padding:6px 12px;border-radius:99px;
+  transition:color .15s,background .15s;
+}
+.search-overlay-close:hover{color:#fff;background:rgba(255,255,255,.1)}
+
+@media(max-width:700px){
+  .search-overlay{padding-top:70px}
+  .search-overlay-filter{padding:0 12px;font-size:.8rem}
+  .search-overlay-input{padding:14px 12px;font-size:.95rem}
+  .search-overlay-submit{padding:0 14px}
+}
 
 /* hamburger menu panel */
 .topnav-menu-wrap{position:relative}
@@ -247,8 +297,6 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
   .prov{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
   .detail-hero{height:200px}
   .watch-title-row{flex-direction:column}
-  /* search dropdown: prevent overflow on narrow screens */
-  .topnav-search-dropdown{width:min(280px,calc(100vw - 32px));right:0;left:auto}
   /* menu panel: cap height so it doesn't fall off short screens */
   .topnav-menu-panel{max-height:calc(100dvh - 80px);overflow-y:auto}
 }
