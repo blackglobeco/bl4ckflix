@@ -240,14 +240,17 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
 @media(max-width:700px){
   .detail{grid-template-columns:1fr}.detail img.poster{max-width:200px}
   nav{gap:12px;flex-wrap:wrap}
-  nav a:not(.logo){display:none}
-  nav .logo{display:block}
+  /* removed stale nav a:not(.logo) rule — logo now uses .topnav-logo */
   .nav-mobile-show{display:flex!important}
   .pgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .page.sp{padding:16px}
   .prov{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
   .detail-hero{height:200px}
   .watch-title-row{flex-direction:column}
+  /* search dropdown: prevent overflow on narrow screens */
+  .topnav-search-dropdown{width:min(280px,calc(100vw - 32px));right:0;left:auto}
+  /* menu panel: cap height so it doesn't fall off short screens */
+  .topnav-menu-panel{max-height:calc(100dvh - 80px);overflow-y:auto}
 }
 @media(max-width:480px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
