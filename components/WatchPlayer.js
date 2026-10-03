@@ -146,7 +146,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster }
       {/* alert */}
       {alert && (
         <div className="wp-alert">
-          <span>🔔 Please switch to other servers if default server doesn&apos;t work.</span>
+          <span>Please switch to other servers if default server doesn&apos;t work.</span>
           <button onClick={() => setAlert(false)} aria-label="Dismiss">✕</button>
         </div>
       )}
