@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { recordWatch } from '@/components/ContinueWatching';
 
 // Flag image helper — flagsapi.com CDN
 const flag = (code) => `https://flagsapi.com/${code}/flat/24.png`;
@@ -107,7 +108,7 @@ const K = 'blackflix:list';
 const readList = () => { try { return JSON.parse(localStorage.getItem(K) || '[]'); } catch { return []; } };
 const writeList = (l) => localStorage.setItem(K, JSON.stringify(l));
 
-export default function WatchPlayer({ type, id, season, episode, title }) {
+export default function WatchPlayer({ type, id, season, episode, title, poster }) {
   const servers = type === 'movie' ? MOVIE_SERVERS : TV_SERVERS;
 
   const [active, setActive]     = useState(servers[0].id);
@@ -118,6 +119,10 @@ export default function WatchPlayer({ type, id, season, episode, title }) {
 
   useEffect(() => setOnList(readList().some(x => x.id === id && x.type === type)), [id, type]);
   useEffect(() => { setLoaded(false); }, [active]);
+  useEffect(() => {
+    // Record this title in Continue Watching history
+    recordWatch({ id, type, title, poster: poster || null });
+  }, [id, type, title]);
 
   const server = servers.find(s => s.id === active) || servers[0];
   const src    = type === 'movie' ? server.url(id) : server.url(id, season, episode);
@@ -126,7 +131,7 @@ export default function WatchPlayer({ type, id, season, episode, title }) {
 
   const toggleList = () => {
     const l = readList().filter(x => !(x.id === id && x.type === type));
-    if (!onList) l.unshift({ id, type, title, poster: null });
+    if (!onList) l.unshift({ id, type, title, poster: poster || null });
     writeList(l);
     setOnList(!onList);
   };
