@@ -186,7 +186,8 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
 
   // ── AD / POPUP BLOCKING ──────────────────────────────────────────────────────
 
-  // 1. Intercept window.open — embeds call this to open ad tabs
+  // 1. window.open intercept — kills tab-open calls from embed JS.
+  //    Re-runs when src changes so serverHost stays current.
   useEffect(() => {
     const orig = window.open.bind(window);
     window.open = (url, ...args) => {
@@ -194,38 +195,89 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
         if (!url) return null;
         const targetHost = new URL(url, location.href).hostname;
         const serverHost = new URL(src).hostname;
-        // Allow only exact same host as the active embed; block everything else
         if (targetHost === serverHost || targetHost.endsWith('.' + serverHost)) {
           return orig(url, ...args);
         }
       } catch {}
-      console.debug('[BlackFlix] blocked popup:', url);
+      console.debug('[BlackFlix] blocked window.open:', url);
       return null;
     };
     return () => { window.open = orig; };
   }, [src]);
 
-  // 2. Block iframe-driven top-level navigation via beforeunload.
-  //    Embeds set location.href on the parent to open ad pages;
-  //    this fires before the browser actually navigates and cancels it.
+  // 2. beforeunload guard — cancels top-frame navigation the embed triggers
+  //    via location.href assignment or form submit.
   useEffect(() => {
-    const guard = (e) => {
-      // Only intercept if no user-initiated navigation is in progress
-      // (Next.js router navigations don't fire beforeunload)
-      e.preventDefault();
-      e.returnValue = '';
-    };
+    const guard = (e) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', guard, { capture: true });
     return () => window.removeEventListener('beforeunload', guard, { capture: true });
   }, []);
 
-  // 3. Intercept clicks on the iframe container — if a click lands on the
-  //    transparent shield (not the player controls), focus the iframe so
-  //    keyboard shortcuts work but prevent the click from bubbling to any
-  //    hidden anchor the embed may have injected above the fold.
+  // 3. blur / visibilitychange trap — the key layer for hidden in-iframe anchors.
+  //    When a hidden <a> inside the iframe is clicked, the browser moves focus
+  //    into the iframe document and fires window.blur on the parent BEFORE
+  //    opening the popup/navigating. We catch that window and immediately
+  //    refocus the parent window, which cancels the pending navigation.
+  useEffect(() => {
+    const onBlur = () => {
+      // Small RAF delay so the iframe gets focus (needed for playback controls),
+      // then snap focus back if activeElement is our iframe — this interrupts
+      // any hidden-anchor navigation queued by the embed.
+      requestAnimationFrame(() => {
+        if (document.activeElement === iframeRef.current) {
+          // Re-focus parent window to cancel any pending iframe-initiated nav
+          window.focus();
+        }
+      });
+    };
+
+    // visibilitychange fires when an embed opens a new tab (tab becomes hidden).
+    // Close any newly opened tabs immediately by focusing back.
+    const onVisChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Schedule a refocus for when we come back into view
+        window.focus();
+      }
+    };
+
+    window.addEventListener('blur', onBlur);
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => {
+      window.removeEventListener('blur', onBlur);
+      document.removeEventListener('visibilitychange', onVisChange);
+    };
+  }, []);
+
+  // 4. document.createElement intercept — some embeds dynamically create
+  //    <a> tags and call .click() on them to bypass window.open blocks.
+  useEffect(() => {
+    const origCreate = document.createElement.bind(document);
+    document.createElement = (tag, ...args) => {
+      const el = origCreate(tag, ...args);
+      if (typeof tag === 'string' && tag.toLowerCase() === 'a') {
+        const origClick = el.click.bind(el);
+        el.click = () => {
+          try {
+            const href = el.getAttribute('href') || '';
+            if (href && href !== '#' && !href.startsWith('javascript')) {
+              const targetHost = new URL(href, location.href).hostname;
+              const serverHost = new URL(src).hostname;
+              if (targetHost !== serverHost && !targetHost.endsWith('.' + serverHost)) {
+                console.debug('[BlackFlix] blocked dynamic anchor click:', href);
+                return;
+              }
+            }
+          } catch {}
+          origClick();
+        };
+      }
+      return el;
+    };
+    return () => { document.createElement = origCreate; };
+  }, [src]);
+
+  // Shield click handler — swallows clicks on the overlay div itself
   const handleShieldClick = useCallback((e) => {
-    // Let the click reach the iframe for playback controls
-    // but stop it propagating to any stacked invisible links
     e.stopPropagation();
     iframeRef.current?.focus();
   }, []);
@@ -405,15 +457,10 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
             onLoad={() => setLoaded(true)}
 
           />
-          {/* Transparent click shield — sits over the iframe edges/corners where
-              embeds inject invisible anchor tags that open ad windows on click.
-              pointer-events:none in the center so normal playback clicks reach
-              the iframe; only the border zones are blocked. */}
-          <div
-            className="wp-ad-shield"
-            onClick={handleShieldClick}
-            aria-hidden="true"
-          />
+          {/* Ad shield — pointer-events:none so iframe controls work normally.
+              Actual ad interception is handled by the blur/window.open/
+              beforeunload/createElement effects above. */}
+          <div className="wp-ad-shield" aria-hidden="true" />
           {!loaded && (
             <div className="wp-loading">
               <div className="wp-spinner" />
