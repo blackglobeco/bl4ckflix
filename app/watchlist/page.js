@@ -1,93 +1,21 @@
-import { notFound } from 'next/navigation';
+'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Row from '@/components/Row';
-import WatchButton from '@/components/WatchButton';
-import CastSection from '@/components/CastSection';
-import { tmdb, img } from '@/lib/tmdb';
-
-export async function generateMetadata({ params }) {
-  const { type, id } = await params;
-  const d = await tmdb(`/${type}/${id}`);
-  const title = d.title || d.name || 'BlackFlix';
-  const desc = d.overview || 'Find what to watch and where to stream it.';
-  const image = d.backdrop_path ? `https://image.tmdb.org/t/p/w1280${d.backdrop_path}` : null;
-  return {
-    title: `${title} · BlackFlix`,
-    description: desc,
-    openGraph: {
-      title,
-      description: desc,
-      type: type === 'movie' ? 'video.movie' : 'video.tv_show',
-      images: image ? [{ url: image, width: 1280, height: 720 }] : [],
-    },
-  };
-}
-
-export default async function Detail({ params }) {
-  const { type, id } = await params;
-  if (!['movie', 'tv'].includes(type)) notFound();
-  const d = await tmdb(`/${type}/${id}`, { append_to_response: 'videos,similar,credits' });
-  if (!d.id) notFound();
-
-  const title = d.title || d.name;
-  const year = (d.release_date || d.first_air_date || '').slice(0, 4);
-  const yt = d.videos?.results?.find((v) => v.site === 'YouTube' && v.type === 'Trailer');
-
-  const cast = d.credits?.cast?.slice(0, 12) || [];
-  const director = d.credits?.crew?.find(c => c.job === 'Director');
-  const creator = d.created_by?.[0];
-
+import { read } from '@/components/WatchButton';
+export default function Watchlist() {
+  const [l, setL] = useState(null);
+  useEffect(() => setL(read()), []);
   return (
-    <>
-      {d.backdrop_path && (
-        <div className="detail-hero" style={{ backgroundImage: `url(${img(d.backdrop_path, 'original')})` }} />
-      )}
-      <div className="detail">
-        {d.poster_path && <img className="poster" src={img(d.poster_path, 'w500')} alt={title} />}
-        <div>
-          <h1>{title}</h1>
-          <div className="meta">
-            {year}
-            {d.vote_average > 0 && <> · <span className="rating-num">★ {d.vote_average.toFixed(1)}/10</span></>}
-            {d.runtime && <> · {d.runtime} min</>}
-            {d.number_of_seasons && <> · {d.number_of_seasons} season{d.number_of_seasons > 1 ? 's' : ''}</>}
-          </div>
-
-          {d.genres?.length > 0 && (
-            <div className="genre-chips">
-              {d.genres.map(g => (
-                <Link key={g.id} href={`/search?type=${type}&genre=${g.id}`} className="genre-chip">{g.name}</Link>
-              ))}
-            </div>
-          )}
-
-          {(director || creator) && (
-            <p className="meta" style={{ marginTop: 6 }}>
-              {director ? `Directed by ${director.name}` : `Created by ${creator.name}`}
-            </p>
-          )}
-
-          <p style={{ marginTop: 12, marginBottom: 18 }}>{d.overview}</p>
-
-          <div className="detail-actions">
-            <Link href={`/watch/${type}/${id}`} className="btn">▶ Watch Now</Link>
-            <WatchButton item={{ ...d, type, media_type: type }} />
-          </div>
-
-          {yt && (
-            <div style={{ marginTop: 20 }}>
-              <h2 style={{ marginBottom: 10 }}>Trailer</h2>
-              <iframe className="trailer" src={`https://www.youtube-nocookie.com/embed/${yt.key}`} title={`${title} trailer`} allowFullScreen />
-            </div>
-          )}
-
-
-        </div>
+    <div className="page">
+      <h1>Watchlist</h1>
+      {l && !l.length && <p className="empty">Nothing saved yet. Open a title and choose Add to watchlist.</p>}
+      <div className="grid">
+        {(l || []).map((i) => (
+          <Link key={i.type + i.id} href={`/${i.type}/${i.id}`} className="card">
+            {i.poster ? <img src={`https://image.tmdb.org/t/p/w342${i.poster}`} alt={i.title} /> : <span className="ph">{i.title}</span>}
+          </Link>
+        ))}
       </div>
-
-      {cast.length > 0 && <CastSection cast={cast} />}
-
-      <Row title="You may also like" items={d.similar?.results} type={type} />
-    </>
+    </div>
   );
 }
