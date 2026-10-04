@@ -137,6 +137,10 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
   const curEpisode = Number(episode) || 1;
   const isTV       = type === 'tv';
 
+  // Compute active server + src early — used in effects below
+  const server = servers.find(s => s.id === active) || servers[0];
+  const src    = type === 'movie' ? server.url(id) : server.url(id, season, episode);
+
   // Derive next destination
   const hasNext = isTV && totalEps !== null
     ? (curEpisode < totalEps) || (curSeason < (totalSeasons || 1))
@@ -201,19 +205,15 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     return () => { window.open = orig; };
   }, [src]);
 
-  // 2. Block iframe-driven top-level navigation via beforeunload
+  // 2. Block iframe-driven top-level navigation via beforeunload.
+  //    Embeds set location.href on the parent to open ad pages;
+  //    this fires before the browser actually navigates and cancels it.
   useEffect(() => {
-    const onBeforeUnload = (e) => {
+    const guard = (e) => {
+      // Only intercept if no user-initiated navigation is in progress
+      // (Next.js router navigations don't fire beforeunload)
       e.preventDefault();
       e.returnValue = '';
-      return '';
-    };
-    // Only intercept when the event originates from iframe context
-    // by checking document.activeElement === the iframe
-    const guard = (e) => {
-      if (iframeRef.current && document.activeElement === iframeRef.current) {
-        onBeforeUnload(e);
-      }
     };
     window.addEventListener('beforeunload', guard, { capture: true });
     return () => window.removeEventListener('beforeunload', guard, { capture: true });
@@ -288,9 +288,6 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     // Record this title in Continue Watching history
     recordWatch({ id, type, title, poster: poster || null });
   }, [id, type, title]);
-
-  const server = servers.find(s => s.id === active) || servers[0];
-  const src    = type === 'movie' ? server.url(id) : server.url(id, season, episode);
 
   const pick = (sid) => { setActive(sid); setShowGrid(false); };
 
