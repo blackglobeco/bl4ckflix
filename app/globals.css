@@ -420,6 +420,53 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
 .wp-bar-btn:hover{background:#3a3734;color:#fff}
 .wp-bar-on{color:var(--red)}
 
+/* Next button accent */
+.wp-bar-next{color:#fff;background:#1c1a18}
+.wp-bar-next:hover{background:var(--red);color:#fff}
+
+/* Auto Next toggle pill */
+.wp-bar-autonext{gap:8px}
+.wp-toggle{
+  display:inline-flex;align-items:center;
+  width:30px;height:17px;border-radius:99px;
+  background:#3a3734;
+  transition:background .2s;
+  flex-shrink:0;
+  padding:2px;
+}
+.wp-toggle--on{background:var(--red)}
+.wp-toggle-knob{
+  display:block;width:13px;height:13px;border-radius:50%;
+  background:#fff;
+  transform:translateX(0);
+  transition:transform .2s;
+}
+.wp-toggle--on .wp-toggle-knob{transform:translateX(13px)}
+
+/* Auto-next countdown overlay */
+.wp-autonext-overlay{
+  position:absolute;bottom:0;right:0;z-index:10;
+  padding:16px;pointer-events:none;
+}
+.wp-autonext-box{
+  background:rgba(12,11,11,.88);
+  border:1px solid #2c2927;
+  border-radius:14px;
+  padding:16px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  pointer-events:auto;
+  backdrop-filter:blur(6px);
+  min-width:160px;
+}
+.wp-autonext-label{font-size:.8rem;color:#9a938a;font-weight:500;margin:0}
+.wp-autonext-ring{position:relative;width:44px;height:44px;display:grid;place-items:center}
+.wp-autonext-svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.wp-ring-bg{fill:none;stroke:#2c2927;stroke-width:3}
+.wp-ring-fill{fill:none;stroke:var(--red);stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.wp-autonext-num{font-size:1.1rem;font-weight:700;color:#fff;position:relative;z-index:1}
+.wp-autonext-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.wp-autonext-btns .wp-bar-btn{font-size:.75rem;padding:5px 10px}
+
 /* watch meta */
 .watch-meta{padding-top:20px}
 .watch-year{font-size:1rem;color:var(--mute);font-weight:400;margin-left:10px}
