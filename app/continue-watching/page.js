@@ -26,16 +26,38 @@ function CWItem({ item, onRemove }) {
     setOnList(isInList(item.type, item.id));
   }, [item.id, item.type]);
 
-  const handleWatchlist = (e) => {
+  const handleWatchlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const next = toggleItem({
-      id:         item.id,
-      type:       item.type,
-      title:      item.title,
-      poster_path: item.poster || null,
-    });
-    setOnList(next);
+    // Already in list — remove immediately, no fetch needed
+    if (onList) {
+      const next = toggleItem({ id: item.id, type: item.type, title: item.title, poster_path: item.poster || null });
+      setOnList(next);
+      return;
+    }
+    // Adding — fetch full TMDB data so the watchlist hover card is complete
+    try {
+      const TMDB_KEY = 'a2359193b290a3bc03ecf35b7eb907ff';
+      const r = await fetch(`https://api.themoviedb.org/3/${item.type}/${item.id}?api_key=${TMDB_KEY}`);
+      const d = r.ok ? await r.json() : null;
+      const next = toggleItem({
+        id:                 item.id,
+        type:               item.type,
+        title:              item.title,
+        poster_path:        d?.poster_path        || item.poster || null,
+        backdrop_path:      d?.backdrop_path       || null,
+        vote_average:       d?.vote_average        || 0,
+        release_date:       d?.release_date        || '',
+        first_air_date:     d?.first_air_date      || '',
+        original_language:  d?.original_language   || '',
+        overview:           d?.overview            || '',
+      });
+      setOnList(next);
+    } catch {
+      // Fallback to minimal shape if fetch fails
+      const next = toggleItem({ id: item.id, type: item.type, title: item.title, poster_path: item.poster || null });
+      setOnList(next);
+    }
   };
 
   return (
