@@ -10,8 +10,7 @@ export default function PosterCard({ item, type }) {
   const lang = item.original_language;
   const overview = item.overview || '';
   const [on, setOn] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [pos, setPos] = useState('right');
+  const [popup, setPopup] = useState(null); // {top, left, side}
   const cardRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -27,26 +26,30 @@ export default function PosterCard({ item, type }) {
 
   const handleMouseEnter = () => {
     timerRef.current = setTimeout(() => {
-      if (cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        const spaceRight = window.innerWidth - rect.right;
-        const spaceLeft = rect.left;
-        if (spaceRight < 280 && spaceLeft > spaceRight) setPos('left');
-        else setPos('right');
-      }
-      setHovered(true);
-    }, 300);
+      if (!cardRef.current) return;
+      const r = cardRef.current.getBoundingClientRect();
+      const POPUP_W = 270;
+      const mid = r.top + r.height / 2;
+      const spaceRight = window.innerWidth - r.right;
+      const side = spaceRight >= POPUP_W + 12 ? 'right' : 'left';
+      const left = side === 'right' ? r.right + 10 : r.left - POPUP_W - 10;
+      // clamp vertically
+      const POPUP_H = 320;
+      let top = mid - POPUP_H / 2;
+      top = Math.max(8, Math.min(top, window.innerHeight - POPUP_H - 8));
+      setPopup({ top, left, side });
+    }, 280);
   };
 
   const handleMouseLeave = () => {
     clearTimeout(timerRef.current);
-    setHovered(false);
+    setPopup(null);
   };
 
   return (
     <div
       ref={cardRef}
-      className={`pc-wrap${hovered ? ' pc-wrap--hovered' : ''}`}
+      className={`pc-wrap${popup ? ' pc-wrap--hovered' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -60,8 +63,13 @@ export default function PosterCard({ item, type }) {
         </div>
       </Link>
 
-      {hovered && (
-        <div className={`pc-popup pc-popup--${pos}`}>
+      {popup && (
+        <div
+          className="pc-popup"
+          style={{ position: 'fixed', top: popup.top, left: popup.left, width: 270 }}
+          onMouseEnter={() => clearTimeout(timerRef.current)}
+          onMouseLeave={handleMouseLeave}
+        >
           <div className="pc-popup-inner">
             {item.backdrop_path && (
               <div className="pc-popup-banner">
@@ -72,7 +80,7 @@ export default function PosterCard({ item, type }) {
               <span className="pc-popup-type">{t === 'movie' ? 'Movie' : 'TV Show'}</span>
               {item.vote_average > 0 && <span className="pc-popup-rating">★ {item.vote_average.toFixed(1)}</span>}
               {year && <span className="pc-popup-year">🗓 {year}</span>}
-              {lang && <span className="pc-popup-lang">{lang.toUpperCase()}</span>}
+              {lang && lang !== 'en' && <span className="pc-popup-lang">{lang.toUpperCase()}</span>}
             </div>
             <p className="pc-popup-title">{title}</p>
             {overview && <p className="pc-popup-overview">{overview.length > 120 ? overview.slice(0, 120) + '…' : overview}</p>}
