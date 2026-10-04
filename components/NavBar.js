@@ -150,8 +150,9 @@ export default function NavBar() {
               <Link href="/search?type=tv"    onClick={() => setMenuOpen(false)}>Series</Link>
               <Link href="/search?type=anime" onClick={() => setMenuOpen(false)}>Anime</Link>
               <Link href="/search?type=drama" onClick={() => setMenuOpen(false)}>Drama</Link>
-              <Link href="/providers"         onClick={() => setMenuOpen(false)}>Providers</Link>
-              <Link href="/watchlist"         onClick={() => setMenuOpen(false)}>Watchlist</Link>
+              <Link href="/providers"           onClick={() => setMenuOpen(false)}>Providers</Link>
+              <Link href="/watchlist"           onClick={() => setMenuOpen(false)}>Watchlist</Link>
+              <Link href="/continue-watching"   onClick={() => setMenuOpen(false)}>Continue Watching</Link>
             </div>
           )}
         </div>

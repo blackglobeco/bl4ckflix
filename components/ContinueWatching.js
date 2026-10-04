@@ -33,7 +33,7 @@ export default function ContinueWatching() {
     <section className="row">
       <h2>
         Continue Watching
-        <Link href="/watchlist">View All</Link>
+        <Link href="/continue-watching">View All</Link>
       </h2>
       <div className="strip">
         {items.slice(0, 20).map(i => (
