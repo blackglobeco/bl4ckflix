@@ -2,22 +2,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { img } from '@/lib/tmdb';
+import { readHistory, recordWatch as _recordWatch } from '@/lib/history';
 
-const HISTORY_KEY = 'blackflix:history';
-
-// Called from WatchPlayer on load — exported so WatchPlayer can import it
-export function recordWatch({ id, type, title, poster }) {
-  try {
-    const raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    const filtered = raw.filter(x => !(x.id === id && x.type === type));
-    filtered.unshift({ id, type, title, poster, ts: Date.now() });
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered.slice(0, 40)));
-  } catch {}
-}
-
-export function readHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
-}
+// Re-export so WatchPlayer's existing import still works.
+export { recordWatch } from '@/lib/history';
+export { readHistory } from '@/lib/history';
 
 export default function ContinueWatching() {
   const [items, setItems] = useState(null);
@@ -26,7 +15,6 @@ export default function ContinueWatching() {
     setItems(readHistory());
   }, []);
 
-  // Don't render anything server-side or if history is empty
   if (!items || items.length === 0) return null;
 
   return (
@@ -38,7 +26,7 @@ export default function ContinueWatching() {
       <div className="strip">
         {items.slice(0, 20).map(i => (
           <Link
-            key={i.type + i.id}
+            key={`${i.type}-${i.id}`}
             href={`/watch/${i.type}/${i.id}`}
             className="card cw-card"
             title={i.title}
