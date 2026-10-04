@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { recordWatch } from '@/components/ContinueWatching';
+import { isInList, toggleItem } from '@/lib/watchlist';
 
 // Flag image helper — flagsapi.com CDN
 const flag = (code) => `https://flagsapi.com/${code}/flat/24.png`;
@@ -104,12 +105,9 @@ const TV_SERVERS = [
   { id: 'peachify',   name: 'Peachify',  cc: 'US', url: (id,s,e) => `https://peachify.top/embed/tv/${id}/${s}/${e}?autoplay=true&sub=English` },
 ];
 
-// Watchlist localStorage helpers (shared key with WatchButton.js)
-const K  = 'blackflix:list';
+// Auto-next localStorage key
 const AN = 'blackflix:autonext';
-const readList    = () => { try { return JSON.parse(localStorage.getItem(K)  || '[]');   } catch { return []; } };
-const writeList   = (l) => localStorage.setItem(K, JSON.stringify(l));
-const readAutoNext= () => { try { return JSON.parse(localStorage.getItem(AN) || 'true'); } catch { return true; } };
+const readAutoNext = () => { try { return JSON.parse(localStorage.getItem(AN) || 'true'); } catch { return true; } };
 
 const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || 'a2359193b290a3bc03ecf35b7eb907ff';
 async function fetchSeasonEpisodeCount(showId, s) {
@@ -219,7 +217,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     if (!next) cancelCountdown();
   };
 
-  useEffect(() => setOnList(readList().some(x => x.id === id && x.type === type)), [id, type]);
+  useEffect(() => setOnList(isInList(type, id)), [id, type]);
   useEffect(() => { setLoaded(false); }, [active]);
   // Cancel countdown when episode changes
   useEffect(() => { cancelCountdown(); }, [curSeason, curEpisode]);
@@ -234,10 +232,8 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
   const pick = (sid) => { setActive(sid); setShowGrid(false); };
 
   const toggleList = () => {
-    const l = readList().filter(x => !(x.id === id && x.type === type));
-    if (!onList) l.unshift({ id, type, title, poster: poster || null });
-    writeList(l);
-    setOnList(!onList);
+    const next = toggleItem({ id, type, title, poster_path: poster || null });
+    setOnList(next);
   };
 
   return (

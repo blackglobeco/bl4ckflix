@@ -1,37 +1,39 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { read, write } from '@/components/WatchButton';
+import { isInList, toggleItem } from '@/lib/watchlist';
 
 export default function PosterCard({ item, type }) {
-  const t = item.media_type || type;
+  const t     = item.media_type || type;
   const title = item.title || item.name;
-  const year = (item.release_date || item.first_air_date || '').slice(0, 4);
-  const lang = item.original_language;
-  const overview = item.overview || '';
-  const [on, setOn] = useState(false);
-  const [popup, setPopup] = useState(null); // {top, left, side}
-  const cardRef = useRef(null);
+  const year  = (item.release_date || item.first_air_date || '').slice(0, 4);
+  const lang  = item.original_language;
+
+  const [on, setOn]       = useState(false);
+  const [popup, setPopup] = useState(null);
+  const cardRef  = useRef(null);
   const timerRef = useRef(null);
 
-  useEffect(() => setOn(read().some((x) => x.id === item.id && x.type === t)), [item.id, t]);
+  useEffect(() => {
+    setOn(isInList(t, item.id));
+  }, [item.id, t]);
 
   const toggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const l = read().filter((x) => !(x.id === item.id && x.type === t));
-    if (!on) l.unshift({
-      id: item.id, type: t, media_type: t,
+    const next = toggleItem({
+      id:                 item.id,
+      type:               t,
       title,
-      poster_path: item.poster_path,
-      backdrop_path: item.backdrop_path || null,
-      vote_average: item.vote_average || 0,
-      overview: item.overview || '',
-      release_date: item.release_date || '',
-      first_air_date: item.first_air_date || '',
-      original_language: item.original_language || '',
+      poster_path:        item.poster_path        || null,
+      backdrop_path:      item.backdrop_path       || null,
+      vote_average:       item.vote_average        || 0,
+      release_date:       item.release_date        || '',
+      first_air_date:     item.first_air_date      || '',
+      original_language:  item.original_language   || '',
+      overview:           item.overview            || '',
     });
-    write(l); setOn(!on);
+    setOn(next);
   };
 
   const handleMouseEnter = () => {
@@ -43,7 +45,6 @@ export default function PosterCard({ item, type }) {
       const spaceRight = window.innerWidth - r.right;
       const side = spaceRight >= POPUP_W + 12 ? 'right' : 'left';
       const left = side === 'right' ? r.right + 10 : r.left - POPUP_W - 10;
-      // clamp vertically
       const POPUP_H = 320;
       let top = mid - POPUP_H / 2;
       top = Math.max(8, Math.min(top, window.innerHeight - POPUP_H - 8));
@@ -66,7 +67,9 @@ export default function PosterCard({ item, type }) {
       <Link href={`/${t}/${item.id}`} className="pc" title={title}>
         <img src={`https://image.tmdb.org/t/p/w342${item.poster_path}`} alt={title} loading="lazy" />
         <button className="bm" onClick={toggle} aria-label={on ? 'Remove from watchlist' : 'Add to watchlist'} aria-pressed={on}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+          </svg>
         </button>
         <div className="pc-badges">
           {item.vote_average > 0 && <span className="badge rate">★ {item.vote_average.toFixed(1)}</span>}
@@ -95,13 +98,23 @@ export default function PosterCard({ item, type }) {
               {lang && lang !== 'en' && <span className="pc-popup-lang">{lang.toUpperCase()}</span>}
             </div>
             <p className="pc-popup-title">{title}</p>
-            {overview && <p className="pc-popup-overview">{overview.length > 120 ? overview.slice(0, 120) + '…' : overview}</p>}
+            {item.overview && (
+              <p className="pc-popup-overview">
+                {item.overview.length > 120 ? item.overview.slice(0, 120) + '…' : item.overview}
+              </p>
+            )}
             <div className="pc-popup-actions">
               <Link href={`/watch/${t}/${item.id}`} className="pc-popup-watch" onClick={(e) => e.stopPropagation()}>
                 ▶ Watch Now
               </Link>
-              <button className={`pc-popup-bm${on ? ' pc-popup-bm--on' : ''}`} onClick={toggle} aria-label={on ? 'Remove from watchlist' : 'Add to watchlist'}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              <button
+                className={`pc-popup-bm${on ? ' pc-popup-bm--on' : ''}`}
+                onClick={toggle}
+                aria-label={on ? 'Remove from watchlist' : 'Add to watchlist'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+                </svg>
               </button>
             </div>
           </div>

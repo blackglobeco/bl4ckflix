@@ -1,15 +1,26 @@
 'use client';
 import { useEffect, useState } from 'react';
-const K = 'blackflix:list';
-export const read = () => { try { return JSON.parse(localStorage.getItem(K) || '[]'); } catch { return []; } };
-export const write = (l) => localStorage.setItem(K, JSON.stringify(l));
+import { isInList, toggleItem, readList, writeList } from '@/lib/watchlist';
+
+// Keep legacy named exports so watchlist/page.js `import { read }` still works.
+export const read  = readList;
+export const write = writeList;
+
 export default function WatchButton({ item }) {
   const [on, setOn] = useState(false);
-  useEffect(() => setOn(read().some((x) => x.id === item.id && x.type === item.type)), [item.id, item.type]);
+
+  useEffect(() => {
+    setOn(isInList(item.type || item.media_type, item.id));
+  }, [item.id, item.type, item.media_type]);
+
   const toggle = () => {
-    const l = read().filter((x) => !(x.id === item.id && x.type === item.type));
-    if (!on) l.unshift(item);
-    write(l); setOn(!on);
+    const next = toggleItem(item);
+    setOn(next);
   };
-  return <button className="btn ghost" onClick={toggle}>{on ? 'Remove from watchlist' : 'Add to watchlist'}</button>;
+
+  return (
+    <button className="btn ghost" onClick={toggle}>
+      {on ? 'Remove from watchlist' : 'Add to watchlist'}
+    </button>
+  );
 }
