@@ -13,7 +13,6 @@ export default function PosterCard({ item, type }) {
   const [popup, setPopup] = useState(null);
   const cardRef  = useRef(null);
   const timerRef = useRef(null);
-  const popupRef = useRef(null);
 
   useEffect(() => {
     setOn(isInList(t, item.id));
@@ -42,22 +41,14 @@ export default function PosterCard({ item, type }) {
       if (!cardRef.current) return;
       const r = cardRef.current.getBoundingClientRect();
       const POPUP_W = 270;
+      const mid = r.top + r.height / 2;
       const spaceRight = window.innerWidth - r.right;
       const side = spaceRight >= POPUP_W + 12 ? 'right' : 'left';
       const left = side === 'right' ? r.right + 10 : r.left - POPUP_W - 10;
-      const anchorMid = r.top + r.height / 2;
-      // First render: position at card top so popup is in DOM
-      setPopup({ top: r.top, left, side });
-      // After paint: measure real height and reposition to true center
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!popupRef.current) return;
-          const h = popupRef.current.offsetHeight;
-          let top = anchorMid - h / 2;
-          top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
-          setPopup({ top, left, side });
-        });
-      });
+      const POPUP_H = 320;
+      let top = mid - POPUP_H / 2;
+      top = Math.max(8, Math.min(top, window.innerHeight - POPUP_H - 8));
+      setPopup({ top, left, side });
     }, 280);
   };
 
@@ -89,7 +80,6 @@ export default function PosterCard({ item, type }) {
 
       {popup && (
         <div
-          ref={popupRef}
           className="pc-popup"
           style={{ position: 'fixed', top: popup.top, left: popup.left, width: 270 }}
           onMouseEnter={() => clearTimeout(timerRef.current)}
