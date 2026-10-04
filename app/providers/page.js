@@ -15,7 +15,7 @@ export default async function Providers() {
       {list.length ? (
         <div className="prov">
           {list.map((p) => (
-            <Link key={p.provider_id} href={`/search?type=tv&provider=${p.provider_id}`} className="pv">
+            <Link key={p.provider_id} href={`/search?provider=${p.provider_id}`} className="pv">
               <img src={img(p.logo_path, 'w92')} alt="" loading="lazy" />
               <span>{p.provider_name}</span>
             </Link>
