@@ -693,3 +693,4 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
 .cw-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;border:0;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
 .cw-wl-btn{position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:6px;background:#2a2725d9;color:#fff;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
 .cw-item:hover .cw-remove,.cw-item:hover .cw-wl-btn{opacity:1}
+.cw-wl-btn--on{background:var(--red)!important;opacity:1!important}
