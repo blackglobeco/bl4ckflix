@@ -403,7 +403,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
             allow="autoplay; fullscreen; picture-in-picture"
             referrerPolicy="origin"
             onLoad={() => setLoaded(true)}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
+
           />
           {/* Transparent click shield — sits over the iframe edges/corners where
               embeds inject invisible anchor tags that open ad windows on click.
