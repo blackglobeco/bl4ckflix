@@ -231,20 +231,35 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
 
   const pick = (sid) => { setActive(sid); setShowGrid(false); };
 
-  const toggleList = () => {
-    const next = toggleItem({
-      id,
-      type,
-      title,
-      poster_path:        poster           || null,
-      backdrop_path:      backdropPath     || null,
-      vote_average:       voteAverage      || 0,
-      release_date:       releaseDate      || '',
-      first_air_date:     firstAirDate     || '',
-      original_language:  originalLanguage || '',
-      overview:           overview         || '',
-    });
-    setOnList(next);
+  const toggleList = async () => {
+    // Already in list — remove immediately, no fetch needed
+    if (onList) {
+      const next = toggleItem({ id, type, title, poster_path: poster || null });
+      setOnList(next);
+      return;
+    }
+    // Adding — fetch full TMDB detail client-side to guarantee complete shape
+    // regardless of what props arrived (avoids server→client serialisation gaps)
+    try {
+      const r = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_KEY}`);
+      const d = r.ok ? await r.json() : null;
+      const next = toggleItem({
+        id,
+        type,
+        title:              d?.title || d?.name           || title,
+        poster_path:        d?.poster_path                || poster || null,
+        backdrop_path:      d?.backdrop_path              || null,
+        vote_average:       d?.vote_average               || 0,
+        release_date:       d?.release_date               || '',
+        first_air_date:     d?.first_air_date             || '',
+        original_language:  d?.original_language          || '',
+        overview:           d?.overview                   || '',
+      });
+      setOnList(next);
+    } catch {
+      const next = toggleItem({ id, type, title, poster_path: poster || null });
+      setOnList(next);
+    }
   };
 
   return (
