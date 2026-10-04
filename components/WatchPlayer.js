@@ -118,7 +118,7 @@ async function fetchSeasonEpisodeCount(showId, s) {
   } catch { return null; }
 }
 
-export default function WatchPlayer({ type, id, season, episode, title, poster, totalSeasons }) {
+export default function WatchPlayer({ type, id, season, episode, title, poster, totalSeasons, backdropPath, voteAverage, releaseDate, firstAirDate, originalLanguage, overview }) {
   const router  = useRouter();
   const servers = type === 'movie' ? MOVIE_SERVERS : TV_SERVERS;
 
@@ -232,7 +232,18 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
   const pick = (sid) => { setActive(sid); setShowGrid(false); };
 
   const toggleList = () => {
-    const next = toggleItem({ id, type, title, poster_path: poster || null });
+    const next = toggleItem({
+      id,
+      type,
+      title,
+      poster_path:        poster           || null,
+      backdrop_path:      backdropPath     || null,
+      vote_average:       voteAverage      || 0,
+      release_date:       releaseDate      || '',
+      first_air_date:     firstAirDate     || '',
+      original_language:  originalLanguage || '',
+      overview:           overview         || '',
+    });
     setOnList(next);
   };
 
