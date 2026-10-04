@@ -389,14 +389,7 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
 .wp-stage{position:relative;background:#000}
 .wp-frame{position:relative;aspect-ratio:16/9;width:100%}
 .wp-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-/* Ad shield: non-interactive overlay — actual ad blocking is done in JS
-   via window.open intercept, blur trap, beforeunload guard, and
-   createElement intercept. Pointer-events:none so iframe controls work. */
-.wp-ad-shield{
-  position:absolute;inset:0;z-index:2;
-  background:transparent;
-  pointer-events:none;
-}
+
 .wp-loading{position:absolute;inset:0;display:grid;place-items:center;background:#111;z-index:3}
 .wp-spinner{width:36px;height:36px;border:3px solid #333;border-top-color:var(--red);border-radius:50%;animation:wp-spin .7s linear infinite}
 @keyframes wp-spin{to{transform:rotate(360deg)}}
