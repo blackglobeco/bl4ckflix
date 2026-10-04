@@ -20,7 +20,7 @@ export default function PosterCard({ item, type }) {
     e.preventDefault();
     e.stopPropagation();
     const l = read().filter((x) => !(x.id === item.id && x.type === t));
-    if (!on) l.unshift({ ...item, type: t, media_type: t });
+    if (!on) l.unshift({ id: item.id, type: t, title, poster: item.poster_path });
     write(l); setOn(!on);
   };
 
