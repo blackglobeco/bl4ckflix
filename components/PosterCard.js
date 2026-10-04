@@ -63,6 +63,11 @@ export default function PosterCard({ item, type }) {
       {hovered && (
         <div className={`pc-popup pc-popup--${pos}`}>
           <div className="pc-popup-inner">
+            {item.backdrop_path && (
+              <div className="pc-popup-banner">
+                <img src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`} alt="" />
+              </div>
+            )}
             <div className="pc-popup-meta">
               <span className="pc-popup-type">{t === 'movie' ? 'Movie' : 'TV Show'}</span>
               {item.vote_average > 0 && <span className="pc-popup-rating">★ {item.vote_average.toFixed(1)}</span>}
