@@ -17,8 +17,8 @@ export default function Watchlist() {
       {items && items.length > 0 && (
         <div className="pgrid">
           {items.map(i => (
-            <div key={(i.media_type || i.type) + i.id} className="strip-item">
-              <PosterCard item={i} type={i.media_type || i.type} />
+            <div key={`${i.type || i.media_type}-${i.id}`} className="strip-item">
+              <PosterCard item={i} type={i.type || i.media_type} />
             </div>
           ))}
         </div>
