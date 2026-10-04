@@ -103,16 +103,19 @@ a{color:inherit;text-decoration:none}
 .topnav-menu-wrap{position:relative}
 .topnav-menu-panel{
   position:absolute;top:calc(100% + 10px);right:0;
-  background:#1a1918;border:1px solid #2c2927;
-  border-radius:12px;padding:8px;min-width:170px;
-  z-index:200;box-shadow:0 16px 40px #000d;
+  background:#1a1918;border:1px solid #2a2927;
+  border-radius:14px;padding:6px;min-width:220px;
+  z-index:200;box-shadow:0 20px 50px #000e;
 }
-.topnav-menu-panel a{
-  display:block;padding:10px 16px;border-radius:8px;
-  font-size:.92rem;font-weight:500;color:var(--text);
-  transition:background .12s;
+.topnav-menu-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;border-radius:9px;
+  font-size:.9rem;font-weight:500;color:var(--text);
+  transition:background .12s;text-decoration:none;
 }
-.topnav-menu-panel a:hover{background:#2c2927;color:#fff}
+.topnav-menu-item:hover{background:#252320;color:#fff}
+.topnav-menu-item:hover .topnav-menu-icon{color:#fff}
+.topnav-menu-icon{color:var(--mute);flex:none;display:flex;align-items:center}
 
 /* push all pages below the fixed nav */
 main{padding-top:70px}
