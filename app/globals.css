@@ -202,6 +202,9 @@ a.genre-chip:hover{border-color:var(--red);color:#fff}
 .trailer-wrap{max-width:860px}
 
 /* ── WATCH PAGE ── */
+/* When the blurred movie backdrop is present, body bg becomes transparent so it shows through */
+body:has(.watch-bg){background:transparent}
+
 .watch-bg{
   position:fixed;inset:0;z-index:-1;
   background-size:cover;background-position:center top;
@@ -211,7 +214,7 @@ a.genre-chip:hover{border-color:var(--red);color:#fff}
 }
 .watch-page{padding:0 4vw;position:relative}
 .watch-player-wrap{margin:20px 0 0}
-.watch-info{padding:18px 0 4px;background:linear-gradient(to bottom,transparent,rgba(12,11,11,.85) 40%,var(--bg) 100%);margin:-2px 0 0}
+.watch-info{padding:18px 0 24px;background:linear-gradient(to bottom,rgba(12,11,11,.45) 0%,rgba(12,11,11,.62) 60%,rgba(12,11,11,.75) 100%);margin:-2px 0 0;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .player-outer{background:#000;border-radius:12px;overflow:hidden}
 .server-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#111;flex-wrap:wrap}
 .server-label{font-size:.82rem;color:var(--mute);font-weight:600;margin-right:4px}
@@ -221,7 +224,6 @@ a.genre-chip:hover{border-color:var(--red);color:#fff}
 .player-frame{position:relative;aspect-ratio:16/9}
 .player-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .player-note{font-size:.78rem;color:var(--mute);padding:8px 14px 10px;background:#111}
-.watch-info{padding:18px 0 4px}
 .watch-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:8px}
 .watch-title{font-size:clamp(1.4rem,3.5vw,2.2rem);letter-spacing:-.03em;line-height:1.1}
 .watch-overview{color:#cfc8bf;max-width:72ch;margin-top:10px}
