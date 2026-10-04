@@ -576,3 +576,23 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
   transition: opacity .15s;
 }
 .cw-card:hover .cw-overlay { opacity: 1; }
+
+/* ── CONTINUE WATCHING PAGE ── */
+.cw-page{padding:24px 28px 60px}
+.cw-topbar{display:flex;gap:12px;margin-bottom:28px;align-items:center}
+.cw-search{flex:1;height:40px;background:transparent;border:1px solid #2c2c33;color:var(--text);padding:0 14px;border-radius:8px;font:inherit;font-size:.9rem}
+.cw-search:focus{outline:none;border-color:#444}
+.cw-clear-all{display:flex;align-items:center;gap:7px;padding:0 16px;height:40px;background:var(--red);color:#fff;border:0;border-radius:8px;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+.cw-clear-all:hover{opacity:.85}
+.cw-date{font-size:1rem;font-weight:600;color:var(--text);margin:0 0 14px}
+.cw-group{margin-bottom:36px}
+.cw-grid{display:flex;flex-wrap:wrap;gap:12px}
+.cw-item{position:relative;width:150px;flex:0 0 150px}
+.cw-thumb{display:block;position:relative;width:150px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:var(--panel)}
+.cw-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cw-play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0006;opacity:0;transition:opacity .15s}
+.cw-thumb:hover .cw-play-overlay{opacity:1}
+.cw-time-bar{position:absolute;bottom:0;left:0;right:0;padding:6px 8px;font-size:.72rem;font-weight:600;color:#fff;background:linear-gradient(transparent,#000d);text-align:center}
+.cw-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;border:0;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.cw-wl-btn{position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:6px;background:#2a2725d9;color:#fff;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.cw-item:hover .cw-remove,.cw-item:hover .cw-wl-btn{opacity:1}
