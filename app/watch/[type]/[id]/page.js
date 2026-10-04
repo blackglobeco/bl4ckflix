@@ -31,8 +31,19 @@ export default async function WatchPage({ params, searchParams }) {
   const title = d.title || d.name;
   const seasons = type === 'tv' ? (d.number_of_seasons || 1) : null;
 
+  const backdrop = d.backdrop_path
+    ? `https://image.tmdb.org/t/p/original${d.backdrop_path}`
+    : null;
+
   return (
     <>
+      {backdrop && (
+        <div
+          className="watch-bg"
+          style={{ backgroundImage: `url(${backdrop})` }}
+          aria-hidden="true"
+        />
+      )}
       <div className="watch-page">
         <div className="watch-player-wrap">
           <WatchPlayer type={type} id={id} season={season} episode={episode} title={title} poster={d.poster_path} />
