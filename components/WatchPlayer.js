@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { recordWatch } from '@/components/ContinueWatching';
 
 // Flag image helper — flagsapi.com CDN
@@ -104,21 +105,124 @@ const TV_SERVERS = [
 ];
 
 // Watchlist localStorage helpers (shared key with WatchButton.js)
-const K = 'blackflix:list';
-const readList = () => { try { return JSON.parse(localStorage.getItem(K) || '[]'); } catch { return []; } };
-const writeList = (l) => localStorage.setItem(K, JSON.stringify(l));
+const K  = 'blackflix:list';
+const AN = 'blackflix:autonext';
+const readList    = () => { try { return JSON.parse(localStorage.getItem(K)  || '[]');   } catch { return []; } };
+const writeList   = (l) => localStorage.setItem(K, JSON.stringify(l));
+const readAutoNext= () => { try { return JSON.parse(localStorage.getItem(AN) || 'true'); } catch { return true; } };
 
-export default function WatchPlayer({ type, id, season, episode, title, poster }) {
+const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || 'a2359193b290a3bc03ecf35b7eb907ff';
+async function fetchSeasonEpisodeCount(showId, s) {
+  try {
+    const r = await fetch(`https://api.themoviedb.org/3/tv/${showId}/season/${s}?api_key=${TMDB_KEY}`);
+    const d = r.ok ? await r.json() : null;
+    return d?.episodes?.length || null;
+  } catch { return null; }
+}
+
+export default function WatchPlayer({ type, id, season, episode, title, poster, totalSeasons }) {
+  const router  = useRouter();
   const servers = type === 'movie' ? MOVIE_SERVERS : TV_SERVERS;
 
-  const [active, setActive]     = useState(servers[0].id);
-  const [showGrid, setShowGrid] = useState(false);
-  const [alert, setAlert]       = useState(true);
-  const [loaded, setLoaded]     = useState(false);
-  const [onList, setOnList]     = useState(false);
+  const [active, setActive]         = useState(servers[0].id);
+  const [showGrid, setShowGrid]     = useState(false);
+  const [alert, setAlert]           = useState(true);
+  const [loaded, setLoaded]         = useState(false);
+  const [onList, setOnList]         = useState(false);
+  const [autoNext, setAutoNext]     = useState(true);
+  const [totalEps, setTotalEps]     = useState(null);   // episodes in current season
+  const [countdown, setCountdown]   = useState(null);   // null | number (5→0)
+  const countdownRef = useRef(null);
+  const iframeRef    = useRef(null);
+
+  const curSeason  = Number(season)  || 1;
+  const curEpisode = Number(episode) || 1;
+  const isTV       = type === 'tv';
+
+  // Derive next destination
+  const hasNext = isTV && totalEps !== null
+    ? (curEpisode < totalEps) || (curSeason < (totalSeasons || 1))
+    : false;
+
+  const nextHref = useCallback(() => {
+    if (!isTV) return null;
+    if (totalEps !== null && curEpisode < totalEps) {
+      return `/watch/${type}/${id}?s=${curSeason}&e=${curEpisode + 1}`;
+    }
+    if (curSeason < (totalSeasons || 1)) {
+      return `/watch/${type}/${id}?s=${curSeason + 1}&e=1`;
+    }
+    return null;
+  }, [isTV, type, id, curSeason, curEpisode, totalEps, totalSeasons]);
+
+  const goNext = useCallback(() => {
+    const href = nextHref();
+    if (href) router.push(href);
+  }, [nextHref, router]);
+
+  // Cancel auto-next countdown
+  const cancelCountdown = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setCountdown(null);
+  };
+
+  // Start 5-second countdown then navigate
+  const startCountdown = useCallback(() => {
+    cancelCountdown();
+    setCountdown(5);
+    let t = 5;
+    countdownRef.current = setInterval(() => {
+      t -= 1;
+      setCountdown(t);
+      if (t <= 0) {
+        clearInterval(countdownRef.current);
+        setCountdown(null);
+        goNext();
+      }
+    }, 1000);
+  }, [goNext]);
+
+  // Listen for postMessage from embedded player signalling video end
+  useEffect(() => {
+    if (!isTV) return;
+    const handler = (e) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        const isEnd =
+          data?.event === 'ended' ||
+          data?.event === 'end'   ||
+          data?.type  === 'ended' ||
+          data?.action === 'ended'||
+          data === 'ended';
+        if (isEnd && autoNext && nextHref()) {
+          startCountdown();
+        }
+      } catch {}
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [isTV, autoNext, nextHref, startCountdown]);
+
+  // Fetch episode count for current season
+  useEffect(() => {
+    if (!isTV) return;
+    fetchSeasonEpisodeCount(id, curSeason).then(setTotalEps);
+  }, [isTV, id, curSeason]);
+
+  // Hydrate auto-next from localStorage
+  useEffect(() => { setAutoNext(readAutoNext()); }, []);
+
+  const toggleAutoNext = () => {
+    const next = !autoNext;
+    setAutoNext(next);
+    localStorage.setItem(AN, JSON.stringify(next));
+    if (!next) cancelCountdown();
+  };
 
   useEffect(() => setOnList(readList().some(x => x.id === id && x.type === type)), [id, type]);
   useEffect(() => { setLoaded(false); }, [active]);
+  // Cancel countdown when episode changes
+  useEffect(() => { cancelCountdown(); }, [curSeason, curEpisode]);
   useEffect(() => {
     // Record this title in Continue Watching history
     recordWatch({ id, type, title, poster: poster || null });
@@ -209,6 +313,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster }
         {/* iframe */}
         <div className="wp-frame">
           <iframe
+            ref={iframeRef}
             key={src}
             src={src}
             title={`Watch ${title}`}
@@ -223,6 +328,31 @@ export default function WatchPlayer({ type, id, season, episode, title, poster }
             </div>
           )}
         </div>
+
+        {/* Auto-next countdown overlay */}
+        {countdown !== null && (
+          <div className="wp-autonext-overlay">
+            <div className="wp-autonext-box">
+              <p className="wp-autonext-label">Next episode in</p>
+              <div className="wp-autonext-ring">
+                <svg viewBox="0 0 44 44" className="wp-autonext-svg">
+                  <circle cx="22" cy="22" r="18" className="wp-ring-bg" />
+                  <circle
+                    cx="22" cy="22" r="18"
+                    className="wp-ring-fill"
+                    strokeDasharray={`${(2 * Math.PI * 18).toFixed(2)}`}
+                    strokeDashoffset={`${((1 - countdown / 5) * 2 * Math.PI * 18).toFixed(2)}`}
+                  />
+                </svg>
+                <span className="wp-autonext-num">{countdown}</span>
+              </div>
+              <div className="wp-autonext-btns">
+                <button className="wp-bar-btn" onClick={goNext}>▶▶ Next Now</button>
+                <button className="wp-bar-btn" onClick={cancelCountdown}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* bottom bar */}
@@ -232,6 +362,32 @@ export default function WatchPlayer({ type, id, season, episode, title, poster }
           {server.name}
         </span>
         <div className="wp-bar-actions">
+          {/* Next episode — TV only */}
+          {isTV && hasNext && (
+            <button className="wp-bar-btn wp-bar-next" onClick={goNext} title="Next episode">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 4 15 12 5 20 5 4"/>
+                <rect x="16" y="4" width="3" height="16" rx="1"/>
+              </svg>
+              Next
+            </button>
+          )}
+
+          {/* Auto Next toggle — TV only */}
+          {isTV && (
+            <button
+              className={`wp-bar-btn wp-bar-autonext${autoNext ? ' wp-bar-on' : ''}`}
+              onClick={toggleAutoNext}
+              title={autoNext ? 'Auto Next: On' : 'Auto Next: Off'}
+            >
+              <span className={`wp-toggle${autoNext ? ' wp-toggle--on' : ''}`} aria-hidden="true">
+                <span className="wp-toggle-knob" />
+              </span>
+              Auto Next
+            </button>
+          )}
+
+          {/* Watchlist */}
           <button className={`wp-bar-btn${onList ? ' wp-bar-on' : ''}`} onClick={toggleList}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill={onList ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
