@@ -71,7 +71,18 @@ export default async function Detail({ params }) {
 
           <div className="detail-actions">
             <Link href={`/watch/${type}/${id}`} className="btn btn--white">▶ Watch Now</Link>
-            <WatchButton item={{ id: d.id, type, title, poster: d.poster_path }} />
+            <WatchButton item={{
+              id:                 d.id,
+              type,
+              title,
+              poster_path:        d.poster_path        || null,
+              backdrop_path:      d.backdrop_path       || null,
+              vote_average:       d.vote_average        || 0,
+              release_date:       d.release_date        || '',
+              first_air_date:     d.first_air_date      || '',
+              original_language:  d.original_language   || '',
+              overview:           d.overview            || '',
+            }} />
           </div>
         </div>
       </div>
