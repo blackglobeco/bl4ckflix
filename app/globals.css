@@ -202,8 +202,16 @@ a.genre-chip:hover{border-color:var(--red);color:#fff}
 .trailer-wrap{max-width:860px}
 
 /* ── WATCH PAGE ── */
-.watch-page{padding:0 4vw}
+.watch-bg{
+  position:fixed;inset:0;z-index:-1;
+  background-size:cover;background-position:center top;
+  filter:blur(22px) brightness(.32) saturate(.8);
+  transform:scale(1.08); /* hide blur edge fringe */
+  pointer-events:none;
+}
+.watch-page{padding:0 4vw;position:relative}
 .watch-player-wrap{margin:20px 0 0}
+.watch-info{padding:18px 0 4px;background:linear-gradient(to bottom,transparent,rgba(12,11,11,.85) 40%,var(--bg) 100%);margin:-2px 0 0}
 .player-outer{background:#000;border-radius:12px;overflow:hidden}
 .server-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#111;flex-wrap:wrap}
 .server-label{font-size:.82rem;color:var(--mute);font-weight:600;margin-right:4px}
