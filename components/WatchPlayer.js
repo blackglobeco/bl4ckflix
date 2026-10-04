@@ -185,101 +185,134 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
   }, [goNext]);
 
   // ── AD / POPUP BLOCKING ──────────────────────────────────────────────────────
+  // Shared allow-check: true = let it through, false = block
+  const srcRef = useRef(src);
+  useEffect(() => { srcRef.current = src; }, [src]);
 
-  // 1. window.open intercept — kills tab-open calls from embed JS.
-  //    Re-runs when src changes so serverHost stays current.
+  const isAllowed = useCallback((url) => {
+    try {
+      if (!url || url === 'about:blank') return true;
+      if (url.startsWith('javascript:') || url.startsWith('data:')) return false;
+      const targetHost = new URL(url, location.href).hostname;
+      if (!targetHost) return true; // relative or empty — let through
+      const serverHost = new URL(srcRef.current).hostname;
+      return targetHost === serverHost || targetHost.endsWith('.' + serverHost);
+    } catch { return true; }
+  }, []);
+
+  // 1. window.open — kills popup/new-tab calls from embed JS
   useEffect(() => {
     const orig = window.open.bind(window);
     window.open = (url, ...args) => {
-      try {
-        if (!url) return null;
-        const targetHost = new URL(url, location.href).hostname;
-        const serverHost = new URL(src).hostname;
-        if (targetHost === serverHost || targetHost.endsWith('.' + serverHost)) {
-          return orig(url, ...args);
-        }
-      } catch {}
-      console.debug('[BlackFlix] blocked window.open:', url);
-      return null;
+      if (!isAllowed(url)) {
+        console.debug('[BF] blocked window.open:', url);
+        return null;
+      }
+      return orig(url, ...args);
     };
     return () => { window.open = orig; };
-  }, [src]);
+  }, [isAllowed]);
 
-  // 2. beforeunload guard — cancels top-frame navigation the embed triggers
-  //    via location.href assignment or form submit.
+  // 2. beforeunload — cancels top-frame navigations triggered by the embed
   useEffect(() => {
     const guard = (e) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', guard, { capture: true });
     return () => window.removeEventListener('beforeunload', guard, { capture: true });
   }, []);
 
-  // 3. blur / visibilitychange trap — the key layer for hidden in-iframe anchors.
-  //    When a hidden <a> inside the iframe is clicked, the browser moves focus
-  //    into the iframe document and fires window.blur on the parent BEFORE
-  //    opening the popup/navigating. We catch that window and immediately
-  //    refocus the parent window, which cancels the pending navigation.
+  // 3. MutationObserver — watches for <a> tags injected into the PARENT document
+  //    by the embed (some iframes append anchors to top-frame body and click them)
   useEffect(() => {
-    const onBlur = () => {
-      // Small RAF delay so the iframe gets focus (needed for playback controls),
-      // then snap focus back if activeElement is our iframe — this interrupts
-      // any hidden-anchor navigation queued by the embed.
-      requestAnimationFrame(() => {
-        if (document.activeElement === iframeRef.current) {
-          // Re-focus parent window to cancel any pending iframe-initiated nav
-          window.focus();
+    const neutralise = (node) => {
+      if (node.nodeType !== 1) return;
+      const anchors = node.tagName === 'A'
+        ? [node]
+        : Array.from(node.querySelectorAll?.('a') || []);
+      anchors.forEach(a => {
+        const href = a.getAttribute('href') || '';
+        const target = a.getAttribute('target') || '';
+        // Block _top / _parent navigations and off-domain hrefs
+        if (
+          ['_top', '_parent'].includes(target) ||
+          (href && !isAllowed(href))
+        ) {
+          a.removeAttribute('href');
+          a.setAttribute('target', '_self');
+          a.addEventListener('click', e => e.preventDefault(), true);
+          console.debug('[BF] neutralised injected anchor:', href);
         }
       });
     };
 
-    // visibilitychange fires when an embed opens a new tab (tab becomes hidden).
-    // Close any newly opened tabs immediately by focusing back.
-    const onVisChange = () => {
-      if (document.visibilityState === 'hidden') {
-        // Schedule a refocus for when we come back into view
-        window.focus();
-      }
-    };
+    const obs = new MutationObserver(mutations => {
+      mutations.forEach(m => m.addedNodes.forEach(neutralise));
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, [isAllowed]);
 
-    window.addEventListener('blur', onBlur);
-    document.addEventListener('visibilitychange', onVisChange);
-    return () => {
-      window.removeEventListener('blur', onBlur);
-      document.removeEventListener('visibilitychange', onVisChange);
-    };
-  }, []);
-
-  // 4. document.createElement intercept — some embeds dynamically create
-  //    <a> tags and call .click() on them to bypass window.open blocks.
+  // 4. document.createElement intercept — blocks dynamically created <a>.click()
+  //    and <form> submits that embed scripts use to trigger navigations
   useEffect(() => {
     const origCreate = document.createElement.bind(document);
-    document.createElement = (tag, ...args) => {
-      const el = origCreate(tag, ...args);
-      if (typeof tag === 'string' && tag.toLowerCase() === 'a') {
+    document.createElement = (tag, ...rest) => {
+      const el = origCreate(tag, ...rest);
+      const t = typeof tag === 'string' ? tag.toLowerCase() : '';
+      if (t === 'a') {
         const origClick = el.click.bind(el);
         el.click = () => {
-          try {
-            const href = el.getAttribute('href') || '';
-            if (href && href !== '#' && !href.startsWith('javascript')) {
-              const targetHost = new URL(href, location.href).hostname;
-              const serverHost = new URL(src).hostname;
-              if (targetHost !== serverHost && !targetHost.endsWith('.' + serverHost)) {
-                console.debug('[BlackFlix] blocked dynamic anchor click:', href);
-                return;
-              }
-            }
-          } catch {}
+          const href = el.getAttribute('href') || el.href || '';
+          const target = el.getAttribute('target') || '';
+          if (['_top', '_parent'].includes(target) || !isAllowed(href)) {
+            console.debug('[BF] blocked dynamic <a>.click():', href);
+            return;
+          }
           origClick();
+        };
+      }
+      if (t === 'form') {
+        const origSubmit = el.submit.bind(el);
+        el.submit = () => {
+          const action = el.getAttribute('action') || '';
+          if (!isAllowed(action)) {
+            console.debug('[BF] blocked dynamic form.submit():', action);
+            return;
+          }
+          origSubmit();
         };
       }
       return el;
     };
     return () => { document.createElement = origCreate; };
-  }, [src]);
+  }, [isAllowed]);
 
-  // Shield click handler — swallows clicks on the overlay div itself
-  const handleShieldClick = useCallback((e) => {
-    e.stopPropagation();
+  // 5. Click capture on the iframe wrapper — catches any click that bubbles
+  //    out of the iframe to the parent document (cross-origin clicks don't
+  //    bubble, but same-origin iframes sometimes do)
+  const handleFrameClick = useCallback((e) => {
+    // Allow clicks that originated from our own UI elements (buttons, etc.)
+    if (e.target !== iframeRef.current) return;
     iframeRef.current?.focus();
+  }, []);
+
+  // 6. visibilitychange — if the page goes hidden right after an iframe click,
+  //    a popup tab was opened; snap focus back so it auto-closes in some browsers
+  useEffect(() => {
+    let lastClick = 0;
+    const onFramePointer = () => { lastClick = Date.now(); };
+    const onVisChange = () => {
+      if (document.visibilityState === 'hidden' && Date.now() - lastClick < 1500) {
+        console.debug('[BF] blocked tab-switch popup');
+        window.focus();
+      }
+    };
+    const frame = iframeRef.current;
+    frame?.addEventListener('mousedown', onFramePointer);
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => {
+      frame?.removeEventListener('mousedown', onFramePointer);
+      document.removeEventListener('visibilitychange', onVisChange);
+    };
   }, []);
 
   // 4. postMessage listener — video end detection + drop ad/redirect signals
@@ -445,7 +478,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
         </button>
 
         {/* iframe */}
-        <div className="wp-frame">
+        <div className="wp-frame" onClick={handleFrameClick}>
           <iframe
             ref={iframeRef}
             key={src}
@@ -455,12 +488,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
             allow="autoplay; fullscreen; picture-in-picture"
             referrerPolicy="origin"
             onLoad={() => setLoaded(true)}
-
           />
-          {/* Ad shield — pointer-events:none so iframe controls work normally.
-              Actual ad interception is handled by the blur/window.open/
-              beforeunload/createElement effects above. */}
-          <div className="wp-ad-shield" aria-hidden="true" />
           {!loaded && (
             <div className="wp-loading">
               <div className="wp-spinner" />
