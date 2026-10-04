@@ -97,7 +97,7 @@ export default function EpisodeSelector({ id, type, seasons, currentSeason, curr
       </div>
 
       {/* Episode list */}
-      <div className="eps-list">
+      <div className={`eps-list${!loading && episodes.length > 5 ? ' eps-list--scroll' : ''}`}>
         {loading ? (
           <div className="eps-loading">
             {Array.from({ length: 6 }).map((_, i) => (
