@@ -46,7 +46,21 @@ export default async function WatchPage({ params, searchParams }) {
       )}
       <div className="watch-page">
         <div className="watch-player-wrap">
-          <WatchPlayer type={type} id={id} season={season} episode={episode} title={title} poster={d.poster_path} totalSeasons={seasons} />
+          <WatchPlayer
+            type={type}
+            id={id}
+            season={season}
+            episode={episode}
+            title={title}
+            poster={d.poster_path}
+            totalSeasons={seasons}
+            backdropPath={d.backdrop_path       || null}
+            voteAverage={d.vote_average         || 0}
+            releaseDate={d.release_date         || ''}
+            firstAirDate={d.first_air_date      || ''}
+            originalLanguage={d.original_language || ''}
+            overview={d.overview               || ''}
+          />
         </div>
         <div className="watch-info">
           <div className="watch-title-row">
