@@ -180,21 +180,84 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     }, 1000);
   }, [goNext]);
 
-  // Listen for postMessage from embedded player signalling video end
+  // ── AD / POPUP BLOCKING ──────────────────────────────────────────────────────
+
+  // 1. Intercept window.open — embeds call this to open ad tabs
   useEffect(() => {
-    if (!isTV) return;
+    const orig = window.open.bind(window);
+    window.open = (url, ...args) => {
+      try {
+        if (!url) return null;
+        const targetHost = new URL(url, location.href).hostname;
+        const serverHost = new URL(src).hostname;
+        // Allow only exact same host as the active embed; block everything else
+        if (targetHost === serverHost || targetHost.endsWith('.' + serverHost)) {
+          return orig(url, ...args);
+        }
+      } catch {}
+      console.debug('[BlackFlix] blocked popup:', url);
+      return null;
+    };
+    return () => { window.open = orig; };
+  }, [src]);
+
+  // 2. Block iframe-driven top-level navigation via beforeunload
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    // Only intercept when the event originates from iframe context
+    // by checking document.activeElement === the iframe
+    const guard = (e) => {
+      if (iframeRef.current && document.activeElement === iframeRef.current) {
+        onBeforeUnload(e);
+      }
+    };
+    window.addEventListener('beforeunload', guard, { capture: true });
+    return () => window.removeEventListener('beforeunload', guard, { capture: true });
+  }, []);
+
+  // 3. Intercept clicks on the iframe container — if a click lands on the
+  //    transparent shield (not the player controls), focus the iframe so
+  //    keyboard shortcuts work but prevent the click from bubbling to any
+  //    hidden anchor the embed may have injected above the fold.
+  const handleShieldClick = useCallback((e) => {
+    // Let the click reach the iframe for playback controls
+    // but stop it propagating to any stacked invisible links
+    e.stopPropagation();
+    iframeRef.current?.focus();
+  }, []);
+
+  // 4. postMessage listener — video end detection + drop ad/redirect signals
+  useEffect(() => {
     const handler = (e) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        const isEnd =
-          data?.event === 'ended' ||
-          data?.event === 'end'   ||
-          data?.type  === 'ended' ||
-          data?.action === 'ended'||
-          data === 'ended';
-        if (isEnd && autoNext && nextHref()) {
-          startCountdown();
+
+        // Drop known ad/navigation postMessage patterns
+        if (data && typeof data === 'object') {
+          const str = JSON.stringify(data).toLowerCase();
+          if (
+            str.includes('redirect') || str.includes('navigate') ||
+            str.includes('open_url') || str.includes('popup') ||
+            str.includes('ad_click') || str.includes('banner')
+          ) {
+            console.debug('[BlackFlix] blocked postMessage:', data);
+            return;
+          }
         }
+
+        // Auto-next: TV only
+        if (!isTV) return;
+        const isEnd =
+          data?.event  === 'ended' ||
+          data?.event  === 'end'   ||
+          data?.type   === 'ended' ||
+          data?.action === 'ended' ||
+          data === 'ended';
+        if (isEnd && autoNext && nextHref()) startCountdown();
       } catch {}
     };
     window.addEventListener('message', handler);
@@ -343,6 +406,16 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
             allow="autoplay; fullscreen; picture-in-picture"
             referrerPolicy="origin"
             onLoad={() => setLoaded(true)}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
+          />
+          {/* Transparent click shield — sits over the iframe edges/corners where
+              embeds inject invisible anchor tags that open ad windows on click.
+              pointer-events:none in the center so normal playback clicks reach
+              the iframe; only the border zones are blocked. */}
+          <div
+            className="wp-ad-shield"
+            onClick={handleShieldClick}
+            aria-hidden="true"
           />
           {!loaded && (
             <div className="wp-loading">
