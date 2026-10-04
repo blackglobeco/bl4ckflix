@@ -45,19 +45,21 @@ export default function PosterCard({ item, type }) {
       const spaceRight = window.innerWidth - r.right;
       const side = spaceRight >= POPUP_W + 12 ? 'right' : 'left';
       const left = side === 'right' ? r.right + 10 : r.left - POPUP_W - 10;
-      // Anchor to card top initially; reposition after render once we know real height
-      setPopup({ top: r.top, left, side, anchorMid: r.top + r.height / 2 });
+      const anchorMid = r.top + r.height / 2;
+      // First render: position at card top so popup is in DOM
+      setPopup({ top: r.top, left, side });
+      // After paint: measure real height and reposition to true center
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!popupRef.current) return;
+          const h = popupRef.current.offsetHeight;
+          let top = anchorMid - h / 2;
+          top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
+          setPopup({ top, left, side });
+        });
+      });
     }, 280);
   };
-
-  // Reposition once popup is in the DOM and we know its real height
-  useEffect(() => {
-    if (!popup || !popupRef.current) return;
-    const h = popupRef.current.offsetHeight;
-    let top = popup.anchorMid - h / 2;
-    top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
-    if (top !== popup.top) setPopup(p => ({ ...p, top }));
-  }, [popup?.anchorMid]);
 
   const handleMouseLeave = () => {
     clearTimeout(timerRef.current);
