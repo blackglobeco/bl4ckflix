@@ -61,7 +61,7 @@ export default async function Home() {
           {providerStrip.map(p => (
             <Link
               key={p.provider_id}
-              href={`/search?type=tv&provider=${p.provider_id}`}
+              href={`/search?provider=${p.provider_id}`}
               className="card"
               style={{ flexBasis: 72, aspectRatio: '1' }}
               title={p.provider_name}
@@ -104,7 +104,7 @@ export default async function Home() {
         <Row
           key={id}
           title={label}
-          viewAllHref={`/search?type=tv&provider=${id}`}
+          viewAllHref={`/search?provider=${id}`}
           items={provRows[i]?.results}
           type="tv"
         />
