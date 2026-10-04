@@ -137,6 +137,8 @@ main{padding-bottom:60px}
 .btn:hover{opacity:.88}
 .btn.ghost{background:#ffffff22}
 .btn.ghost:hover{background:#ffffff33}
+.btn--white{background:#fff;color:#0d0c0b}
+.btn--white:hover{opacity:.9}
 
 /* ── ROWS ── */
 .row{padding:22px 0 0 4vw}
@@ -186,14 +188,18 @@ a.genre-chip:hover{border-color:var(--red);color:#fff}
 
 /* ── CAST ── */
 .cast-section{padding-bottom:12px}
-.cast-strip{gap:12px}
-.cast-card{flex:0 0 110px;display:flex;flex-direction:column;gap:6px}
-.cast-card img{width:110px;height:140px;object-fit:cover;border-radius:8px;background:var(--panel)}
-.cast-no-photo{width:110px;height:140px;background:var(--panel);border-radius:8px;display:grid;place-items:center}
-.cast-no-photo span{font-size:1.5rem;font-weight:700;color:var(--mute)}
-.cast-info{display:flex;flex-direction:column;gap:2px}
-.cast-name{font-size:.82rem;font-weight:600;line-height:1.2}
-.cast-char{font-size:.75rem;color:var(--mute);line-height:1.2}
+.cast-strip{gap:18px}
+.cast-card{flex:0 0 90px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.cast-avatar{width:82px;height:82px;border-radius:50%;overflow:hidden;background:var(--panel);flex:none;border:2px solid #2c2927}
+.cast-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.cast-avatar span{width:100%;height:100%;display:grid;place-items:center;font-size:1.4rem;font-weight:700;color:var(--mute)}
+.cast-info{display:flex;flex-direction:column;gap:2px;width:90px}
+.cast-name{font-size:.78rem;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cast-char{font-size:.72rem;color:var(--mute);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ── TRAILER SECTION ── */
+.detail-trailer{padding-bottom:24px}
+.detail-trailer h2{margin-bottom:14px}
+.trailer-wrap{max-width:860px}
 
 /* ── WATCH PAGE ── */
 .watch-page{padding:0 4vw}
