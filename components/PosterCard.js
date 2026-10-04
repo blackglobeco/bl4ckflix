@@ -20,7 +20,17 @@ export default function PosterCard({ item, type }) {
     e.preventDefault();
     e.stopPropagation();
     const l = read().filter((x) => !(x.id === item.id && x.type === t));
-    if (!on) l.unshift({ id: item.id, type: t, title, poster: item.poster_path });
+    if (!on) l.unshift({
+      id: item.id, type: t, media_type: t,
+      title,
+      poster_path: item.poster_path,
+      backdrop_path: item.backdrop_path || null,
+      vote_average: item.vote_average || 0,
+      overview: item.overview || '',
+      release_date: item.release_date || '',
+      first_air_date: item.first_air_date || '',
+      original_language: item.original_language || '',
+    });
     write(l); setOn(!on);
   };
 
