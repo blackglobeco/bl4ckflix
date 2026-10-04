@@ -55,7 +55,9 @@ export default function PosterCard({ item, type }) {
     >
       <Link href={`/${t}/${item.id}`} className="pc" title={title}>
         <img src={`https://image.tmdb.org/t/p/w342${item.poster_path}`} alt={title} loading="lazy" />
-        <button className="bm" onClick={toggle} aria-label={on ? 'Remove from watchlist' : 'Add to watchlist'} aria-pressed={on}>{on ? '✓' : '+'}</button>
+        <button className="bm" onClick={toggle} aria-label={on ? 'Remove from watchlist' : 'Add to watchlist'} aria-pressed={on}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        </button>
         <div className="pc-badges">
           {item.vote_average > 0 && <span className="badge rate">★ {item.vote_average.toFixed(1)}</span>}
           {year && <span className="badge year">{year}</span>}
@@ -89,7 +91,7 @@ export default function PosterCard({ item, type }) {
                 ▶ Watch Now
               </Link>
               <button className={`pc-popup-bm${on ? ' pc-popup-bm--on' : ''}`} onClick={toggle} aria-label={on ? 'Remove from watchlist' : 'Add to watchlist'}>
-                {on ? '✓' : '+'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
               </button>
             </div>
           </div>
