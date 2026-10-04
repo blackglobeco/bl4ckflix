@@ -70,22 +70,22 @@ export default async function Detail({ params }) {
           <p style={{ marginTop: 12, marginBottom: 18 }}>{d.overview}</p>
 
           <div className="detail-actions">
-            <Link href={`/watch/${type}/${id}`} className="btn">▶ Watch Now</Link>
+            <Link href={`/watch/${type}/${id}`} className="btn btn--white">▶ Watch Now</Link>
             <WatchButton item={{ id: d.id, type, title, poster: d.poster_path }} />
           </div>
-
-          {yt && (
-            <div style={{ marginTop: 20 }}>
-              <h2 style={{ marginBottom: 10 }}>Trailer</h2>
-              <iframe className="trailer" src={`https://www.youtube-nocookie.com/embed/${yt.key}`} title={`${title} trailer`} allowFullScreen />
-            </div>
-          )}
-
-
         </div>
       </div>
 
       {cast.length > 0 && <CastSection cast={cast} />}
+
+      {yt && (
+        <section className="detail-trailer row">
+          <h2>Trailer</h2>
+          <div className="trailer-wrap">
+            <iframe className="trailer" src={`https://www.youtube-nocookie.com/embed/${yt.key}`} title={`${title} trailer`} allowFullScreen />
+          </div>
+        </section>
+      )}
 
       <Row title="You may also like" items={d.similar?.results} type={type} />
     </>
