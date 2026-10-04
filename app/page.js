@@ -81,6 +81,7 @@ export default async function Home() {
         viewAllHref="/search?type=movie"
         items={nowPlaying.results}
         type="movie"
+        hoverable
       />
 
       {/* ── TRENDING MOVIES ── */}
@@ -89,6 +90,7 @@ export default async function Home() {
         viewAllHref="/search?type=movie"
         items={trendingMovies}
         type="movie"
+        hoverable
       />
 
       {/* ── TRENDING TV SHOWS ── */}
@@ -97,6 +99,7 @@ export default async function Home() {
         viewAllHref="/search?type=tv"
         items={trendingTV.results}
         type="tv"
+        hoverable
       />
 
       {/* ── PROVIDER ROWS ── */}
@@ -107,6 +110,7 @@ export default async function Home() {
           viewAllHref={`/search?provider=${id}`}
           items={provRows[i]?.results}
           type="tv"
+          hoverable
         />
       ))}
 
@@ -116,6 +120,7 @@ export default async function Home() {
         viewAllHref="/search?type=movie&country=IN"
         items={india.results}
         type="movie"
+        hoverable
       />
     </>
   );
