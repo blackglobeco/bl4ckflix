@@ -389,30 +389,13 @@ footer{padding:24px 4vw;color:var(--mute);font-size:.8rem;display:flex;flex-dire
 .wp-stage{position:relative;background:#000}
 .wp-frame{position:relative;aspect-ratio:16/9;width:100%}
 .wp-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-/* Ad shield: covers the iframe at z-index above it.
-   pointer-events are set so the CENTER of the player is transparent
-   (playback clicks reach the iframe) while the frame perimeter—where
-   embeds stash invisible ad anchors—is intercepted and swallowed. */
+/* Ad shield: non-interactive overlay — actual ad blocking is done in JS
+   via window.open intercept, blur trap, beforeunload guard, and
+   createElement intercept. Pointer-events:none so iframe controls work. */
 .wp-ad-shield{
   position:absolute;inset:0;z-index:2;
-  /* 12px border zone on all sides catches edge-injected ad links */
   background:transparent;
-  border:12px solid transparent;
-  box-sizing:border-box;
-  /* The inner area must be click-through so normal player controls work */
   pointer-events:none;
-}
-/* Re-enable pointer events only on the border region via a pseudo-element */
-.wp-ad-shield::before{
-  content:'';position:absolute;inset:0;
-  pointer-events:all;
-  background:transparent;
-  /* Center 92% of the area is click-through; outer border intercepts */
-  clip-path:polygon(
-    0% 0%, 100% 0%, 100% 100%, 0% 100%,        /* outer rect */
-    0% 0%,                                        /* back to origin */
-    3% 3%, 3% 97%, 97% 97%, 97% 3%, 3% 3%       /* inner cutout */
-  );
 }
 .wp-loading{position:absolute;inset:0;display:grid;place-items:center;background:#111;z-index:3}
 .wp-spinner{width:36px;height:36px;border:3px solid #333;border-top-color:var(--red);border-radius:50%;animation:wp-spin .7s linear infinite}
