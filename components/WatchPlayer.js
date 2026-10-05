@@ -193,14 +193,8 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     try {
       if (!url || url === 'about:blank') return true;
       if (url.startsWith('javascript:') || url.startsWith('data:')) return false;
-      // Relative paths (not protocol-relative) — always allow
-      if (url.startsWith('/') && !url.startsWith('//')) return true;
-      if (url.startsWith('./') || url.startsWith('../')) return true;
-      if (!url.includes('://') && !url.startsWith('//')) return true;
-      // Resolve protocol-relative URLs before parsing
-      const resolved = url.startsWith('//') ? 'https:' + url : url;
-      const targetHost = new URL(resolved, location.href).hostname;
-      if (!targetHost) return true;
+      const targetHost = new URL(url, location.href).hostname;
+      if (!targetHost) return true; // relative or empty — let through
       const serverHost = new URL(srcRef.current).hostname;
       return targetHost === serverHost || targetHost.endsWith('.' + serverHost);
     } catch { return true; }
@@ -301,55 +295,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     iframeRef.current?.focus();
   }, []);
 
-  // 6. location.href / location.assign / location.replace intercept.
-  //    Catches onclick="location.href='ad'" and top.location assignments
-  //    that bypass window.open entirely. Object.defineProperty on the
-  //    location object intercepts ALL navigation attempts on the parent frame.
-  useEffect(() => {
-    let origAssign, origReplace;
-    try {
-      // Save originals before we override
-      origAssign  = location.assign.bind(location);
-      origReplace = location.replace.bind(location);
-
-      // Override assign and replace
-      location.assign = (url) => {
-        if (!isAllowed(url)) { console.debug('[BF] blocked location.assign:', url); return; }
-        origAssign(url);
-      };
-      location.replace = (url) => {
-        if (!isAllowed(url)) { console.debug('[BF] blocked location.replace:', url); return; }
-        origReplace(url);
-      };
-
-      // Override href setter via descriptor
-      const desc = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
-      if (desc && desc.set) {
-        const origSet = desc.set;
-        Object.defineProperty(location, 'href', {
-          get: desc.get,
-          set(val) {
-            if (!isAllowed(val)) { console.debug('[BF] blocked location.href=:', val); return; }
-            origSet.call(location, val);
-          },
-          configurable: true,
-        });
-      }
-    } catch (err) {
-      console.debug('[BF] location intercept failed (expected in strict mode):', err.message);
-    }
-    return () => {
-      try {
-        if (origAssign)  location.assign  = origAssign;
-        if (origReplace) location.replace = origReplace;
-        // Restore original href descriptor
-        const desc = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
-        if (desc) Object.defineProperty(location, 'href', desc);
-      } catch {}
-    };
-  }, [isAllowed]);
-
-  // 8. visibilitychange — if the page goes hidden right after an iframe click,
+  // 6. visibilitychange — if the page goes hidden right after an iframe click,
   //    a popup tab was opened; snap focus back so it auto-closes in some browsers
   useEffect(() => {
     let lastClick = 0;
@@ -360,44 +306,14 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
         window.focus();
       }
     };
+    const frame = iframeRef.current;
+    frame?.addEventListener('mousedown', onFramePointer);
     document.addEventListener('visibilitychange', onVisChange);
     return () => {
+      frame?.removeEventListener('mousedown', onFramePointer);
       document.removeEventListener('visibilitychange', onVisChange);
     };
   }, []);
-
-  // ── Click-intercept overlay state ────────────────────────────────────────────
-  // The main remaining vector: embed puts a full-size transparent <a> or <div>
-  // with an onclick inside its own iframe DOM (cross-origin — we can't touch it).
-  // Strategy: on first click into the iframe, absorb it with a blocking overlay,
-  // record the timestamp, then remove the overlay after 300ms so subsequent
-  // clicks (genuine player controls) go through. This breaks the "hidden spot"
-  // one-click popup while leaving playback usable.
-  const [overlayActive, setOverlayActive] = useState(true);
-  const overlayTimer = useRef(null);
-
-  // Reset overlay whenever the server/src changes (new embed loaded)
-  useEffect(() => {
-    setOverlayActive(true);
-    if (overlayTimer.current) clearTimeout(overlayTimer.current);
-  }, [src]);
-
-  const handleOverlayClick = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // First click absorbed — now open the overlay for a short window then remove
-    iframeRef.current?.focus();
-    if (overlayTimer.current) clearTimeout(overlayTimer.current);
-    // 400ms window: if the embed fires its onclick immediately, it's already blocked.
-    // After 400ms, remove overlay so real player clicks work.
-    overlayTimer.current = setTimeout(() => setOverlayActive(false), 400);
-  }, []);
-
-  // Re-arm overlay when iframe reloads (user switched server)
-  useEffect(() => {
-    setOverlayActive(true);
-    return () => { if (overlayTimer.current) clearTimeout(overlayTimer.current); };
-  }, [active]);
 
   // 4. postMessage listener — video end detection + drop ad/redirect signals
   useEffect(() => {
@@ -571,19 +487,8 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
             allowFullScreen
             allow="autoplay; fullscreen; picture-in-picture"
             referrerPolicy="origin"
-            onLoad={() => { setLoaded(true); setOverlayActive(true); }}
+            onLoad={() => setLoaded(true)}
           />
-          {/* First-click absorber: sits on top of the iframe for 400ms after
-              each load/server-switch, swallowing the hidden-spot click that
-              embed servers place at z-index:9999 inside their own DOM.
-              After 400ms it removes itself so real player controls work. */}
-          {overlayActive && (
-            <div
-              className="wp-click-shield"
-              onClick={handleOverlayClick}
-              aria-hidden="true"
-            />
-          )}
           {!loaded && (
             <div className="wp-loading">
               <div className="wp-spinner" />
