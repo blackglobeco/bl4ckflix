@@ -1,4 +1,19 @@
-   {
-     "framework": "nextjs",
-     "buildCommand": "next build"
-   }
+{
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "headers": [
+    {
+      "source": "/watch/(.*)",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "popups=(), popups-to-escape-sandbox=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-src https://ythd.org https://vixsrc.to https://player.vidplus.pro https://player2.vidplus.pro https://player.videasy.to https://vidfast.vc https://nxsha.space https://vidsuper.net https://vidcore.net https://vidrock.net https://primesrc.me https://2embed.stream https://www.2embed.stream https://cinemaos.tech https://vidlink.pro https://nhdapi.com https://rozgarlelo.modiplay.xyz https://play.xpass.top https://moviesapi.to https://www.vidking.net https://111movies.net https://superflixapi.lifestyle https://frembed.hair https://www.rivestream.app https://flicky.host https://peachify.top https://vidnest.fun https://www.nontonGo.win https://www.youtube-nocookie.com;"
+        }
+      ]
+    }
+  ]
+}
