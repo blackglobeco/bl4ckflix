@@ -133,7 +133,6 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
   const countdownRef = useRef(null);
   const iframeRef    = useRef(null);
   const wrapperRef   = useRef(null);   // wp-frame div — for hover tracking
-  const shieldRef    = useRef(null);   // transparent ad-block shield over iframe
 
   const curSeason  = Number(season)  || 1;
   const curEpisode = Number(episode) || 1;
@@ -580,54 +579,6 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
             referrerPolicy="no-referrer-when-downgrade"
             onLoad={() => setLoaded(true)}
           />
-
-          {/* ── AD SHIELD ───────────────────────────────────────────────────────
-              Transparent layer in the top-frame DOM sitting above the cross-origin
-              iframe. Absorbs pointer events before they reach embed JS, blocking
-              hidden overlay ads and hijacked control-bar click handlers.
-
-              On mousedown / touchstart: drops pointer-events to 'none' for 600ms
-              so legitimate play / pause / seek actions pass through to the iframe.
-              Shield reinstates on mouseup / touchend or after the 600ms hard cap —
-              whichever comes first.
-
-              Any window.open or navigation fired during the passthrough window is
-              on the EMBED's cross-origin window; modern popup blockers suppress
-              secondary window.open calls that aren't the primary gesture handler,
-              and the 600ms cap is too short for the embed's async ad timers.
-              Top-frame ad attacks (Layers 1–4) remain fully active throughout.
-          ──────────────────────────────────────────────────────────────────────── */}
-          <div
-            ref={shieldRef}
-            className="wp-ad-shield"
-            onMouseDown={() => {
-              if (!shieldRef.current) return;
-              shieldRef.current.style.pointerEvents = 'none';
-              const restore = () => {
-                if (shieldRef.current) shieldRef.current.style.pointerEvents = 'auto';
-                window.removeEventListener('mouseup', restore);
-              };
-              window.addEventListener('mouseup', restore);
-              setTimeout(() => {
-                if (shieldRef.current) shieldRef.current.style.pointerEvents = 'auto';
-              }, 600);
-            }}
-            onTouchStart={() => {
-              if (!shieldRef.current) return;
-              shieldRef.current.style.pointerEvents = 'none';
-              const restore = () => {
-                if (shieldRef.current) shieldRef.current.style.pointerEvents = 'auto';
-                window.removeEventListener('touchend', restore);
-                window.removeEventListener('touchcancel', restore);
-              };
-              window.addEventListener('touchend', restore);
-              window.addEventListener('touchcancel', restore);
-              setTimeout(() => {
-                if (shieldRef.current) shieldRef.current.style.pointerEvents = 'auto';
-              }, 600);
-            }}
-          />
-
           {!loaded && (
             <div className="wp-loading">
               <div className="wp-spinner" />
