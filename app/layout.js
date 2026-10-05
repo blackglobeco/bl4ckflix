@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: { title: 'BLACKFLIX', description: 'Find what to watch and where to stream it.', type: 'website' },
 };
 
-export const viewport = { themeColor: '#e50914', width: 'device-width', initialScale: 1 };
+export const viewport = { themeColor: '#000000', width: 'device-width', initialScale: 1 };
 
 export default function Root({ children }) {
   return (
