@@ -1,6 +1,6 @@
 {
-  "name": "BlackFlix",
-  "short_name": "BlackFlix",
+  "name": "BLACKFLIX",
+  "short_name": "BLACKFLIX",
   "description": "Find what to watch and where to stream it.",
   "start_url": "/",
   "display": "standalone",
@@ -8,6 +8,7 @@
   "theme_color": "#e50914",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
   ]
 }
