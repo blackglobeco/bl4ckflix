@@ -213,8 +213,14 @@ export default function NavBar() {
       {iosModal && (() => {
         const chrome  = isIOSChrome();
         const firefox = isIOSFirefox();
+        const ShareIcon = () => (
+          <svg style={{ display: 'inline', verticalAlign: 'middle', margin: '0 3px' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+        );
         const steps = chrome ? [
-          <>Tap the <strong style={{ color: '#fff' }}>three-dot menu</strong> (⋮) in the top-right corner of Chrome</>,
+          <>Tap the <strong style={{ color: '#fff' }}>Share</strong> button <ShareIcon /> at the top-right corner of Chrome</>,
+          <>Tap <strong style={{ color: '#fff' }}>View More ∨</strong></>,
           <>Tap <strong style={{ color: '#fff' }}>Add to Home Screen</strong></>,
           <>Tap <strong style={{ color: '#fff' }}>Add</strong> to confirm</>,
         ] : firefox ? [
@@ -222,13 +228,10 @@ export default function NavBar() {
           <>Tap <strong style={{ color: '#fff' }}>Share</strong>, then <strong style={{ color: '#fff' }}>Add to Home Screen</strong></>,
           <>Tap <strong style={{ color: '#fff' }}>Add</strong> to confirm</>,
         ] : [
-          <>Tap the <strong style={{ color: '#fff' }}>Share</strong> button{' '}
-            <svg style={{ display: 'inline', verticalAlign: 'middle', margin: '0 3px' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>{' '}
-            at the bottom of Safari
-          </>,
-          <>Scroll down and tap <strong style={{ color: '#fff' }}>Add to Home Screen</strong></>,
+          <>Tap the <strong style={{ color: '#fff' }}>three-dot menu</strong> (...) at the bottom-right corner of Safari</>,
+          <>Tap the <strong style={{ color: '#fff' }}>Share</strong> button <ShareIcon /></>,
+          <>Tap <strong style={{ color: '#fff' }}>View More ∨</strong></>,
+          <>Tap <strong style={{ color: '#fff' }}>Add to Home Screen</strong></>,
           <>Tap <strong style={{ color: '#fff' }}>Add</strong> to confirm</>,
         ];
         const browserLabel = chrome ? 'Chrome' : firefox ? 'Firefox' : 'Safari';
