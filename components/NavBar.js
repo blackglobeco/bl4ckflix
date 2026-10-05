@@ -24,12 +24,21 @@ function isInStandaloneMode() {
     window.navigator.standalone === true;
 }
 
+function isMacSafari() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  const safari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua);
+  const mac = /Macintosh/.test(ua);
+  return safari && mac;
+}
+
 export default function NavBar() {
   const [menuOpen, setMenuOpen]       = useState(false);
   const [searchOpen, setSearchOpen]   = useState(false);
   const [deferredPrompt, setDeferred] = useState(null);
   const [installed, setInstalled]     = useState(false);
   const [iosModal, setIosModal]       = useState(false);
+  const [macModal, setMacModal]       = useState(false);
   const [swReady, setSwReady]         = useState(false);
   const router    = useRouter();
   const menuRef   = useRef(null);
@@ -59,6 +68,10 @@ export default function NavBar() {
       setIosModal(true);
       return;
     }
+    if (isMacSafari()) {
+      setMacModal(true);
+      return;
+    }
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
@@ -73,7 +86,7 @@ export default function NavBar() {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
       if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false);
     };
-    const esc = (e) => { if (e.key === 'Escape') { setMenuOpen(false); setSearchOpen(false); setIosModal(false); } };
+    const esc = (e) => { if (e.key === 'Escape') { setMenuOpen(false); setSearchOpen(false); setIosModal(false); setMacModal(false); } };
     document.addEventListener('mousedown', out);
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', esc); };
@@ -210,6 +223,50 @@ export default function NavBar() {
       </nav>
 
       {/* ── iOS "Add to Home Screen" modal ── */}
+      {macModal && (
+        <div
+          className="ios-modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setMacModal(false); }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.75)', display: 'flex',
+            alignItems: 'flex-end', justifyContent: 'center', padding: '0 16px 32px',
+          }}
+        >
+          <div style={{
+            background: '#1a1a1a', borderRadius: 16, padding: '28px 24px',
+            width: '100%', maxWidth: 400, textAlign: 'center',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🖥️</div>
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#fff' }}>
+              Install BLACKFLIX
+            </h3>
+            <p style={{ margin: '0 0 6px', color: '#aaa', fontSize: 14, lineHeight: 1.6 }}>
+              To install on your Mac (Safari):
+            </p>
+            <p style={{ margin: '0 0 16px', color: '#666', fontSize: 12, lineHeight: 1.5 }}>
+              Requires macOS Sonoma (14) or later with Safari 17+
+            </p>
+            <ol style={{ textAlign: 'left', color: '#ccc', fontSize: 14, lineHeight: 2, paddingLeft: 20, margin: '0 0 24px' }}>
+              <li>Click the <strong style={{ color: '#fff' }}>Share</strong> button in the Safari toolbar</li>
+              <li>Select <strong style={{ color: '#fff' }}>Add to Dock</strong> from the menu</li>
+              <li>Click <strong style={{ color: '#fff' }}>Add</strong> to confirm</li>
+            </ol>
+            <button
+              onClick={() => setMacModal(false)}
+              style={{
+                width: '100%', padding: '12px', borderRadius: 10, border: 'none',
+                background: '#e50914', color: '#fff', fontWeight: 700,
+                fontSize: 15, cursor: 'pointer',
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       {iosModal && (() => {
         const chrome  = isIOSChrome();
         const firefox = isIOSFirefox();
