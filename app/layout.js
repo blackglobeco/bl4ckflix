@@ -6,9 +6,13 @@ import Chatbot from '@/components/Chatbot';
 const f = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font' });
 
 export const metadata = {
-  title: 'BlackFlix',
+  title: 'BLACKFLIX',
   description: 'Find what to watch and where to stream it.',
-  openGraph: { title: 'BlackFlix', description: 'Find what to watch and where to stream it.', type: 'website' },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  openGraph: { title: 'BLACKFLIX', description: 'Find what to watch and where to stream it.', type: 'website' },
 };
 
 export const viewport = { themeColor: '#e50914', width: 'device-width', initialScale: 1 };
