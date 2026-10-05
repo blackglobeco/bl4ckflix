@@ -132,6 +132,7 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
   const [countdown, setCountdown]   = useState(null);   // null | number (5→0)
   const countdownRef = useRef(null);
   const iframeRef    = useRef(null);
+  const wrapperRef   = useRef(null);   // wp-frame div — for hover tracking
 
   const curSeason  = Number(season)  || 1;
   const curEpisode = Number(episode) || 1;
@@ -295,27 +296,116 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     iframeRef.current?.focus();
   }, []);
 
-  // 6. visibilitychange — if the page goes hidden right after an iframe click,
-  //    a popup tab was opened; snap focus back so it auto-closes in some browsers
+  // 6. blur focus-trap — fires the instant a popup window steals focus.
+  //    ROOT FIX: mousedown/touchstart on the iframe element DON'T fire for
+  //    cross-origin iframes (browser isolation). Correct signals are:
+  //    - 'focus' on the iframe element → fires when user clicks INSIDE the iframe
+  //    - mouseenter/mouseleave on the wrapper div → tracks hover state
+  //    Both work across the origin boundary.
   useEffect(() => {
-    let lastClick = 0;
-    const onFramePointer = () => { lastClick = Date.now(); };
+    let iframeFocused  = false;
+    let mouseOverFrame = false;
+    let blurSnapTimer  = null;
+
+    // fires when user clicks inside the cross-origin iframe
+    const onIframeFocus = () => { iframeFocused = true; };
+    const onIframeBlurEl = () => { iframeFocused = false; };
+
+    // tracks whether the mouse cursor is over the player area
+    const onMouseEnter = () => { mouseOverFrame = true; };
+    const onMouseLeave = () => { mouseOverFrame = false; };
+
+    // window loses focus — if the iframe was focused or hovered, a popup opened
+    const onBlur = () => {
+      if (iframeFocused || mouseOverFrame) {
+        console.debug('[BF] blur trap — iframe was active, snapping focus back');
+        window.focus();
+        if (blurSnapTimer) clearTimeout(blurSnapTimer);
+        blurSnapTimer = setTimeout(() => window.focus(), 150);
+      }
+    };
+
+    // Secondary: visibilitychange — tab hidden while iframe was active
     const onVisChange = () => {
-      if (document.visibilityState === 'hidden' && Date.now() - lastClick < 1500) {
-        console.debug('[BF] blocked tab-switch popup');
+      if (document.visibilityState === 'hidden' && (iframeFocused || mouseOverFrame)) {
+        console.debug('[BF] visibilitychange trap — refocusing');
         window.focus();
       }
     };
-    const frame = iframeRef.current;
-    frame?.addEventListener('mousedown', onFramePointer);
+
+    const frame   = iframeRef.current;
+    const wrapper = wrapperRef.current;
+    frame?.addEventListener('focus', onIframeFocus);
+    frame?.addEventListener('blur',  onIframeBlurEl);
+    wrapper?.addEventListener('mouseenter', onMouseEnter);
+    wrapper?.addEventListener('mouseleave', onMouseLeave);
+    window.addEventListener('blur', onBlur);
     document.addEventListener('visibilitychange', onVisChange);
+
     return () => {
-      frame?.removeEventListener('mousedown', onFramePointer);
+      if (blurSnapTimer) clearTimeout(blurSnapTimer);
+      frame?.removeEventListener('focus', onIframeFocus);
+      frame?.removeEventListener('blur',  onIframeBlurEl);
+      wrapper?.removeEventListener('mouseenter', onMouseEnter);
+      wrapper?.removeEventListener('mouseleave', onMouseLeave);
+      window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVisChange);
     };
   }, []);
 
-  // 4. postMessage listener — video end detection + drop ad/redirect signals
+  // 7. iframe self-navigation guard — hidden ad links inside the player can
+  //    navigate the iframe itself to an ad URL (no new tab → blur trap misses it).
+  //    We detect this via the iframe's 'load' event firing AFTER a user interaction:
+  //    the iframe's load fires on initial embed load, and again only if the document
+  //    inside it changes. Quality/subtitle switches are XHR — no load event.
+  //    So load-after-click = almost certainly an ad navigation → reset to server src.
+  useEffect(() => {
+    let initialLoadDone = false;
+    let recentIframeClick = false;
+    let clickTimer    = null;
+    let resetting     = false; // prevents the reset-triggered load from looping
+
+    // 'focus' on the iframe element fires when user clicks INSIDE the cross-origin iframe.
+    // mouseenter/mouseleave on the wrapper tracks hover. Both work cross-origin.
+    let iframeFocused2  = false;
+    let mouseOver2      = false;
+
+    const onFocus2      = () => { iframeFocused2 = true;  recentIframeClick = true; if (clickTimer) clearTimeout(clickTimer); clickTimer = setTimeout(() => { recentIframeClick = false; }, 2000); };
+    const onBlurEl2     = () => { iframeFocused2 = false; };
+    const onEnter2      = () => { mouseOver2 = true; };
+    const onLeave2      = () => { mouseOver2 = false; };
+
+    const onIframeLoad = () => {
+      if (!initialLoadDone) { initialLoadDone = true; return; } // first load — normal
+      if (resetting)        { resetting = false; return; }      // our own reset — skip
+      // If iframe was active (focused or hovered) when it navigated → ad hijack
+      if (recentIframeClick || iframeFocused2 || mouseOver2) {
+        console.debug('[BF] iframe self-navigation detected — resetting to server src');
+        resetting = true;
+        const frame = iframeRef.current;
+        if (frame) setTimeout(() => { if (frame) frame.src = srcRef.current; }, 80);
+      }
+    };
+
+    const frame   = iframeRef.current;
+    const wrapper = wrapperRef.current;
+    frame?.addEventListener('load',  onIframeLoad);
+    frame?.addEventListener('focus', onFocus2);
+    frame?.addEventListener('blur',  onBlurEl2);
+    wrapper?.addEventListener('mouseenter', onEnter2);
+    wrapper?.addEventListener('mouseleave', onLeave2);
+
+    return () => {
+      if (clickTimer) clearTimeout(clickTimer);
+      frame?.removeEventListener('load',  onIframeLoad);
+      frame?.removeEventListener('focus', onFocus2);
+      frame?.removeEventListener('blur',  onBlurEl2);
+      wrapper?.removeEventListener('mouseenter', onEnter2);
+      wrapper?.removeEventListener('mouseleave', onLeave2);
+    };
+  }, [src]); // re-run on server/episode switch so initialLoadDone resets too
+
+  // 8. postMessage listener — video end detection + drop ad/redirect signals
   useEffect(() => {
     const handler = (e) => {
       try {
@@ -478,15 +568,15 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
         </button>
 
         {/* iframe */}
-        <div className="wp-frame" onClick={handleFrameClick}>
+        <div ref={wrapperRef} className="wp-frame" onClick={handleFrameClick}>
           <iframe
             ref={iframeRef}
             key={src}
             src={src}
             title={`Watch ${title}`}
             allowFullScreen
-            allow="autoplay; fullscreen; picture-in-picture"
-            referrerPolicy="origin"
+            allow="autoplay; fullscreen; picture-in-picture; web-share"
+            referrerPolicy="no-referrer-when-downgrade"
             onLoad={() => setLoaded(true)}
           />
           {!loaded && (
