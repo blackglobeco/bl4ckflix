@@ -8,10 +8,6 @@ const f = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font' });
 export const metadata = {
   title: 'BLACKFLIX',
   description: 'Find what to watch and where to stream it.',
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-  },
   openGraph: { title: 'BLACKFLIX', description: 'Find what to watch and where to stream it.', type: 'website' },
 };
 
