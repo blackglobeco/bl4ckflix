@@ -295,22 +295,46 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
     iframeRef.current?.focus();
   }, []);
 
-  // 6. visibilitychange — if the page goes hidden right after an iframe click,
-  //    a popup tab was opened; snap focus back so it auto-closes in some browsers
+  // 6. blur focus-trap — fires the instant a popup window steals focus.
+  //    window.focus() snaps back before the popup fully loads, closing it in
+  //    most browsers. Gated on recent iframe interaction (mousedown / touchstart)
+  //    so we don't interfere with the user legitimately switching tabs.
+  //    Also retains visibilitychange as a secondary fallback.
   useEffect(() => {
-    let lastClick = 0;
-    const onFramePointer = () => { lastClick = Date.now(); };
+    const GATE_MS = 1200; // ms window after iframe interaction to treat blur as popup
+    let lastIframeInteract = 0;
+    let blurSnapTimer = null;
+
+    const onIframeInteract = () => { lastIframeInteract = Date.now(); };
+
+    const onBlur = () => {
+      if (Date.now() - lastIframeInteract < GATE_MS) {
+        console.debug('[BF] blur trap — likely popup, snapping focus back');
+        // Two-stage: immediate + 150 ms delayed for browsers that need a tick
+        window.focus();
+        blurSnapTimer = setTimeout(() => window.focus(), 150);
+      }
+    };
+
+    // Secondary: visibilitychange — catches tab-switch popups blur misses
     const onVisChange = () => {
-      if (document.visibilityState === 'hidden' && Date.now() - lastClick < 1500) {
-        console.debug('[BF] blocked tab-switch popup');
+      if (document.visibilityState === 'hidden' && Date.now() - lastIframeInteract < GATE_MS) {
+        console.debug('[BF] visibilitychange trap — tab hidden after iframe interaction');
         window.focus();
       }
     };
+
     const frame = iframeRef.current;
-    frame?.addEventListener('mousedown', onFramePointer);
+    frame?.addEventListener('mousedown',  onIframeInteract);
+    frame?.addEventListener('touchstart', onIframeInteract, { passive: true });
+    window.addEventListener('blur', onBlur);
     document.addEventListener('visibilitychange', onVisChange);
+
     return () => {
-      frame?.removeEventListener('mousedown', onFramePointer);
+      if (blurSnapTimer) clearTimeout(blurSnapTimer);
+      frame?.removeEventListener('mousedown',  onIframeInteract);
+      frame?.removeEventListener('touchstart', onIframeInteract);
+      window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVisChange);
     };
   }, []);
@@ -485,8 +509,8 @@ export default function WatchPlayer({ type, id, season, episode, title, poster, 
             src={src}
             title={`Watch ${title}`}
             allowFullScreen
-            allow="autoplay; fullscreen; picture-in-picture"
-            referrerPolicy="origin"
+            allow="autoplay; fullscreen; picture-in-picture; web-share"
+            referrerPolicy="no-referrer-when-downgrade"
             onLoad={() => setLoaded(true)}
           />
           {!loaded && (
