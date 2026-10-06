@@ -99,7 +99,10 @@ export default function NavBar() {
     <>
       <nav className="topnav">
         {/* Logo */}
-        <Link href="/" className="topnav-logo">BLACKFLIX</Link>
+        <Link href="/" className="topnav-logo">
+          <img src="/blackglobelogo.gif" alt="" className="topnav-globe" aria-hidden="true" />
+          BLACKFLIX
+        </Link>
 
         <span className="topnav-sp" />
 
