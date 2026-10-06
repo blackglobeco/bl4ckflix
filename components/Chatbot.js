@@ -20,7 +20,7 @@ export default function Chatbot() {
               <li><a href="/watchlist">Your watchlist</a></li>
               <li><a href="/settings">Change settings</a></li>
             </ul>
-            <p className="chatbot-note">BLACKFLIX Support</p>
+            <p className="chatbot-note"> </p>
           </div>
         </div>
       )}
