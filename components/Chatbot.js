@@ -12,14 +12,15 @@ export default function Chatbot() {
             <button onClick={() => setOpen(false)} aria-label="Close">✕</button>
           </div>
           <div className="chatbot-body">
-            <p>👋 Need help? Try these quick links:</p>
+            <p>Need help? Try these quick links:</p>
             <ul>
               <li><a href="/search">Browse all titles</a></li>
               <li><a href="/providers">Find a provider</a></li>
+              <li><a href="/continue-watching">Continue your watching</a></li>
               <li><a href="/watchlist">Your watchlist</a></li>
-              <li><a href="/settings">Change region</a></li>
+              <li><a href="/settings">Change settings</a></li>
             </ul>
-            <p className="chatbot-note">BlackFlix is a streaming guide — we don't host video. Use the Watch button on any title to find a player.</p>
+            <p className="chatbot-note">BLACKFLIX Support</p>
           </div>
         </div>
       )}
