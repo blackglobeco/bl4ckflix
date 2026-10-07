@@ -2,6 +2,7 @@ import './globals.css';
 import { Bricolage_Grotesque } from 'next/font/google';
 import NavBar from '@/components/NavBar';
 import Chatbot from '@/components/Chatbot';
+import { Analytics } from '@vercel/analytics/next';
 
 const f = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font' });
 
@@ -41,6 +42,7 @@ export default function Root({ children }) {
           <p>BLACKFLIX does not store any files on our server, we only linked to the media which is hosted on third party services.</p>
           <p>BLACKFLIX © 2026. All Rights Reserved</p>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
